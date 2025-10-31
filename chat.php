@@ -10,9 +10,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $apiKey = getenv('OPENAI_API_KEY');
+
+if (!$apiKey) {
+	$envPath = __DIR__ . '/.env';
+	if (is_readable($envPath)) {
+		$envValues = parse_ini_file($envPath, false, INI_SCANNER_RAW);
+		if (isset($envValues['OPENAI_API_KEY'])) {
+			$apiKey = trim($envValues['OPENAI_API_KEY']);
+		}
+	}
+}
+
 if (!$apiKey) {
 	http_response_code(500);
-	echo json_encode(['error' => 'Missing OpenAI API key in environment']);
+	echo json_encode(['error' => 'Missing OpenAI API key in environment or .env file']);
 	exit;
 }
 
