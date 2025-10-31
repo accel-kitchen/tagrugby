@@ -56,14 +56,27 @@ $messages[] = [
 	'content' => $message,
 ];
 
-$body = json_encode(
-	[
-		'model' => 'gpt-5-codex',
+$model = 'gpt-5-codex';
+$responsesModels = ['gpt-5-codex'];
+$useResponsesEndpoint = in_array($model, $responsesModels, true);
+
+if ($useResponsesEndpoint) {
+	$requestPayload = [
+		'model' => $model,
+		'input' => $messages,
+		'temperature' => 0.6,
+	];
+	$endpoint = 'https://api.openai.com/v1/responses';
+} else {
+	$requestPayload = [
+		'model' => $model,
 		'messages' => $messages,
 		'temperature' => 0.6,
-	],
-	JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-);
+	];
+	$endpoint = 'https://api.openai.com/v1/chat/completions';
+}
+
+$body = json_encode($requestPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
 if (!function_exists('curl_init')) {
 	http_response_code(500);
@@ -71,7 +84,7 @@ if (!function_exists('curl_init')) {
 	exit;
 }
 
-$ch = curl_init('https://api.openai.com/v1/chat/completions');
+$ch = curl_init($endpoint);
 curl_setopt_array($ch, [
 	CURLOPT_POST => true,
 	CURLOPT_RETURNTRANSFER => true,
@@ -102,6 +115,22 @@ if ($httpStatus >= 400) {
 }
 
 $data = json_decode($response, true);
-$reply = $data['choices'][0]['message']['content'] ?? '';
+$reply = '';
+
+if ($useResponsesEndpoint) {
+	$output = $data['output'] ?? [];
+	foreach ($output as $item) {
+		if (($item['role'] ?? '') !== 'assistant') {
+			continue;
+		}
+		foreach ($item['content'] ?? [] as $content) {
+			if (($content['type'] ?? '') === 'text') {
+				$reply .= $content['text']['value'] ?? '';
+			}
+		}
+	}
+} else {
+	$reply = $data['choices'][0]['message']['content'] ?? '';
+}
 
 echo json_encode(['reply' => $reply]);
