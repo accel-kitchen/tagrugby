@@ -25,11 +25,13 @@ async function sendChat() {
 			body: JSON.stringify(payload),
 		});
 
+		const data = await response.json().catch(() => ({}));
+
 		if (!response.ok) {
-			throw new Error(`Server responded with ${response.status}`);
+			const detail = data.error || data.message || `status ${response.status}`;
+			throw new Error(`Server responded with ${detail}`);
 		}
 
-		const data = await response.json();
 		const reply = data.reply ?? "(応答を取得できませんでした)";
 
 		loading.style.display = "none";
@@ -38,7 +40,7 @@ async function sendChat() {
 	} catch (error) {
 		console.error("Error:", error);
 		loading.style.display = "none";
-		chatBox.innerHTML += `<p class="text-danger"><strong>System:</strong> AIとの通信でエラーが発生しました。</p>`;
+		chatBox.innerHTML += `<p class="text-danger"><strong>System:</strong> ${error.message}</p>`;
 	}
 }
 

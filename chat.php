@@ -60,6 +60,12 @@ $body = json_encode(
 	JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
 );
 
+if (!function_exists('curl_init')) {
+	http_response_code(500);
+	echo json_encode(['error' => 'PHP cURL extension is required but not enabled.']);
+	exit;
+}
+
 $ch = curl_init('https://api.openai.com/v1/chat/completions');
 curl_setopt_array($ch, [
 	CURLOPT_POST => true,
