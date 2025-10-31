@@ -64,7 +64,7 @@ $messages[] = [
 
 $body = json_encode(
 	[
-		'model' => 'gpt-4o-mini',
+		'model' => 'gpt-5-codex',
 		'messages' => $messages,
 		'temperature' => 0.6,
 	],
