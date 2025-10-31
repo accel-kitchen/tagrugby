@@ -1,0 +1,10 @@
+# Environment secrets
+.env
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+
+# Build outputs
+/vendor/
+/node_modules/

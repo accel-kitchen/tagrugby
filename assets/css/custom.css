@@ -1,0 +1,74 @@
+@import url("https://fonts.googleapis.com/css?family=Noto+Sans+JP:400,500&subset=japanese");
+/* body要素 */
+body {
+  font-family: "Noto Sans JP", sans-serif !important;
+  font-size: 1.2em;
+  padding-top: 80px;
+  margin: 0;
+  background-color: #f6f6f6;
+}
+
+.no-wrap {
+  display: inline-block; /* インラインブロック化 */
+}
+
+.btn-primary {
+  color: #fff;
+  border-color: #a2a6a7;
+  background: #525c5f;
+}
+.btn-primary:hover {
+  background: #52666f;
+}
+
+.bg-progress-attack {
+  background: #175570;
+}
+
+.bg-progress-defense {
+  background: #9d414a;
+}
+.progress {
+  height: 2rem;
+  font-size: 0.8em;
+}
+
+.CodeMirror {
+  height: auto;
+  min-height: 400px;
+}
+
+.paramBadgeSelected {
+  background-color: #175570 !important;
+  font-weight: 400;
+  font-size: 1em;
+}
+.paramBadge {
+  background-color: #929292;
+  font-weight: 400;
+  font-size: 1em;
+}
+
+.param-list {
+  font-size: 0.8em;
+  height: 38px;
+}
+
+.param-description {
+  font-size: 0.8em;
+  color: #6e6e6e;
+  text-align: left;
+}
+.param-item {
+  text-align: right;
+}
+
+.material-symbols-outlined {
+  position: relative;
+  vertical-align: bottom;
+}
+
+#chat-box{
+  white-space: pre-wrap;
+  border-color: #a2a6a7;
+}
