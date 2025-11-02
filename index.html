@@ -37,7 +37,7 @@
     <script src="assets/codemirror/addon/search/jump-to-line.js"></script>
     <link rel="stylesheet" href="assets/codemirror/theme/eclipse.css" />
     <!-- TagRugby-core -->
-    <script type="text/javascript" src="assets/js/TagRugby-core.js"></script>
+    <script type="module" src="assets/js/TagRugby-core-v2.js"></script>
 
     
   </head>
@@ -598,12 +598,15 @@
       theme: "eclipse" /* テーマの設定 */,
     });
     editor.setValue(loadAI());
+    window.attackEditor = editor;
+    window.editor = editor; // ES6モジュールとの互換性のため
     let pos_editor = CodeMirror.fromTextArea(document.CodingForm.initial_pos, {
       lineNumbers: true,
       mode: "javascript",
       theme: "eclipse" /* テーマの設定 */,
     });
     pos_editor.setValue(loadpos());
+    window.pos_editor = pos_editor; // ES6モジュールとの互換性のため
     //----------------------------------------
     // 初期配置の読み込み
     //----------------------------------------

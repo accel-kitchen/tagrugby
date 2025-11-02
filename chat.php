@@ -40,7 +40,7 @@ if ($message === '') {
 $messages = [
 	[
 		'role' => 'system',
-		'content' => 'You are a helpful assistant that supports Tag Rugby AI tuning tasks.',
+		'content' => 'You are a helpful assistant that supports Tag Rugby AI tuning tasks. When suggesting edits to attack AI scripts, provide a concise explanation followed by the complete updated file inside a single ```javascript``` block (no diffs or excerpts) so it can be applied directly to the editor.',
 	],
 ];
 
@@ -61,17 +61,27 @@ $responsesModels = ['gpt-5-codex'];
 $useResponsesEndpoint = in_array($model, $responsesModels, true);
 
 if ($useResponsesEndpoint) {
+	$input = array_map(static function (array $message): array {
+		return [
+			'role' => $message['role'],
+			'content' => [
+				[
+					'type' => 'input_text',
+					'text' => $message['content'],
+				],
+			],
+		];
+	}, $messages);
+
 	$requestPayload = [
 		'model' => $model,
-		'input' => $messages,
-		'temperature' => 0.6,
+		'input' => $input,
 	];
 	$endpoint = 'https://api.openai.com/v1/responses';
 } else {
 	$requestPayload = [
 		'model' => $model,
 		'messages' => $messages,
-		'temperature' => 0.6,
 	];
 	$endpoint = 'https://api.openai.com/v1/chat/completions';
 }
@@ -124,8 +134,8 @@ if ($useResponsesEndpoint) {
 			continue;
 		}
 		foreach ($item['content'] ?? [] as $content) {
-			if (($content['type'] ?? '') === 'text') {
-				$reply .= $content['text']['value'] ?? '';
+			if (($content['type'] ?? '') === 'output_text') {
+				$reply .= (string)($content['text'] ?? '');
 			}
 		}
 	}

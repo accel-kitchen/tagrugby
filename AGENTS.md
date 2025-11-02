@@ -1,33 +1,19 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `index.html` is the simulator shell that wires Bootstrap, CodeMirror, and `assets/js/TagRugby-core.js`.
-- `AI/` stores behaviour presets (`AI0.js`, `AI5.js`, etc.) plus their coordinate seeds under `pos_AI*`. Add new playbooks next to the current numbering so the dropdown continues to map correctly.
-- `assets/` hosts vendor code (`codemirror/`), theme files in `css/`, sprites in `img/`, and the shared engine under `js/`.
-- `automatch.php` and `upload.php` back file upload flows; leave them at the web root to keep relative paths intact.
-- `test.html` boots the engine without the editor, useful for quick behavioural checks.
+Keep `index.html` as the primary simulator shell; it wires Bootstrap, CodeMirror, and `assets/js/TagRugby-core.js`. AI playbooks live in `AI/` with paired coordinate seeds inside matching `pos_AI*` folders—extend numbering sequentially so dropdown indices stay aligned. Shared engine code and vendor libraries sit under `assets/` (`js/`, `css/`, `img/`, `codemirror/`). Retain `automatch.php` and `upload.php` at the repository root because the client expects those relative paths. Use `test.html` for a lightweight harness when you only need to validate in-game behaviour.
 
 ## Build, Test, and Development Commands
-- `php -S 127.0.0.1:8000` — start a local server from the repository root; open `/index.html` for the editor or `/test.html` for the harness.
-- `npx serve .` — static fallback when PHP is unavailable; PHP endpoints are skipped in this mode.
-- `zip -r tagrugby-highschool.zip assets AI index.html` — rebuild the distributable archive after updating client assets or AI scripts.
+Run `php -S 127.0.0.1:8000` from the repo root to serve the PHP endpoints and open `/index.html` or `/test.html`. When PHP is unavailable, `npx serve .` provides a static fallback (PHP routes will be skipped). Package updated client assets with `zip -r tagrugby-highschool.zip assets AI index.html` before distribution.
 
 ## Coding Style & Naming Conventions
-- JavaScript files use tab-indented blocks with single spaces around operators; keep coefficient declarations vertically tidy.
-- Prefer `const` for fixed parameters and `let` for evolving state; avoid `var`.
-- Functions and globals use `camelCase`; exported AI hooks must remain in `rugby_AI.AI#` so the loader resolves them.
-- Comment only when clarifying tactics or data flow, not restating the code.
+Use tab-indented JavaScript with single spaces around operators. Prefer `const` for fixed coefficients and `let` for evolving state; avoid `var`. Functions, globals, and exported hooks stay in `camelCase`, and AI entry points must remain `rugby_AI.AI#` to keep the loader working. Comment sparingly—focus on tactical intent or data flow rather than restating logic.
 
 ## Testing Guidelines
-- Manual smoke tests: open `/test.html`, cycle through tag phases, and confirm player paths for each `AI#` selection.
-- After tuning coefficients, swap between the edited and reference `AI*.js` entries via the dropdown to confirm intent.
-- Validate upload workflows by running the PHP server and posting the sample `AI/pos_*` CSVs; ensure responses stay 200 OK.
+Manual verification is the norm: open `/test.html`, cycle through all tag phases, and confirm each `AI#` option follows the intended routes. After adjusting coefficients, compare behaviour by swapping between modified and baseline `AI*.js` files via the dropdown. Exercise upload workflows through the PHP server by posting sample `AI/pos_*` CSVs and confirm `200 OK` responses.
 
 ## Commit & Pull Request Guidelines
-- Use imperative, present-tense subjects (e.g., `Adjust AI5 defensive spacing`) and group related tweaks into focused commits.
-- Reference tracked issues or lesson plans in descriptions, and note which `AI#` presets change and why.
-- PRs should include reproduction steps, screenshots or clips for UI edits, and confirmation that both `index.html` and `test.html` were exercised.
+Write imperative, present-tense commit subjects (e.g., `Tighten AI5 chase spacing`) and group related edits together. In PR descriptions, call out which `AI#` presets changed, the tactical goal, and any linked lesson plans or issues. Include reproduction steps, relevant screenshots or clips, and state that both `index.html` and `test.html` were exercised.
 
-## Agent Tips
-- Duplicate the closest `pos_AI*` folder before editing positions so you can diff actual changes cleanly.
-- Keep third-party updates scoped to `assets/` and note version bumps in the PR body for traceability.
+## Security & Configuration Tips
+Store `OPENAI_API_KEY` in your environment or `.env`; never commit the key. Confirm the PHP cURL extension is enabled before calling `chat.php`, and avoid modifying third-party libraries under `assets/` unless documenting the version bump.
