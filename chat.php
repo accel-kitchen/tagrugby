@@ -30,6 +30,7 @@ if (!is_array($payload)) {
 
 $message = trim((string)($payload['message'] ?? ''));
 $context = trim((string)($payload['context'] ?? ''));
+$history = (array)($payload['history'] ?? []);
 
 if ($message === '') {
 	http_response_code(422);
@@ -40,7 +41,7 @@ if ($message === '') {
 $messages = [
 	[
 		'role' => 'system',
-		'content' => 'You are a helpful assistant that supports Tag Rugby AI tuning tasks. When suggesting edits to attack AI scripts, provide a concise explanation followed by the complete updated file inside a single ```javascript``` block (no diffs or excerpts) so it can be applied directly to the editor.',
+		'content' => 'You are a helpful assistant that supports Tag Rugby AI tuning tasks. When suggesting edits to attack AI scripts, provide a concise explanation followed by the complete updated file inside a single ```javascript``` block (no diffs or excerpts) so it can be applied directly to the editor. All code must include polite and detailed Japanese comments explaining what each section does, using polite language (です・ます調) and clear explanations of the logic, coefficients, and evaluation formulas.',
 	],
 ];
 
@@ -49,6 +50,20 @@ if ($context !== '') {
 		'role' => 'system',
 		'content' => "Current AI code snippet:\n" . $context,
 	];
+}
+
+// 会話履歴を追加（直近10件まで）
+foreach ($history as $item) {
+	if (isset($item['role']) && isset($item['content'])) {
+		$role = (string)$item['role'];
+		$content = (string)$item['content'];
+		if (in_array($role, ['user', 'assistant'], true) && $content !== '') {
+			$messages[] = [
+				'role' => $role,
+				'content' => $content,
+			];
+		}
+	}
 }
 
 $messages[] = [

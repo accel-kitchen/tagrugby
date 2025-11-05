@@ -3,16 +3,91 @@ const inputField = document.getElementById("input-field");
 const chatBox = document.getElementById("chat-box");
 const loadingIndicator = document.getElementById("loadingIndicator");
 
+// 会話履歴を保持する配列
+const conversationHistory = [];
+
 function createMessageElement(role, text) {
 	const entry = document.createElement("div");
 	entry.className = `chat-entry chat-${role.toLowerCase()}`;
 	const label = document.createElement("strong");
 	label.textContent = `${role}:`;
 	entry.appendChild(label);
-	const body = document.createElement("span");
+	const body = document.createElement("div");
 	body.className = "chat-text";
 	body.style.whiteSpace = "pre-wrap";
-	body.textContent = ` ${text}`;
+	
+	// コードブロックを検出してスタイリング
+	const codeBlockRegex = /```(?:javascript|js)?\s*([\s\S]*?)```/gi;
+	const matches = [];
+	let match;
+	
+	// すべてのマッチを収集（グローバルフラグのため配列に保存）
+	while ((match = codeBlockRegex.exec(text)) !== null) {
+		matches.push({
+			index: match.index,
+			length: match[0].length,
+			content: match[1].trim()
+		});
+	}
+	
+	if (matches.length > 0) {
+		let lastIndex = 0;
+		matches.forEach((codeMatch) => {
+			// コードブロックの前のテキストを追加
+			if (codeMatch.index > lastIndex) {
+				const textBefore = document.createTextNode(text.slice(lastIndex, codeMatch.index));
+				body.appendChild(textBefore);
+			}
+			
+			// コードブロックをCodeMirrorエディタで表示
+			const codeBlock = document.createElement("div");
+			codeBlock.className = "chat-code-block";
+			
+			// テキストエリアを作成してCodeMirrorを初期化
+			const textarea = document.createElement("textarea");
+			textarea.value = codeMatch.content;
+			codeBlock.appendChild(textarea);
+			
+			// CodeMirrorエディタを作成（読み取り専用）
+			const codeEditor = CodeMirror.fromTextArea(textarea, {
+				mode: "javascript",
+				theme: "eclipse",
+				lineNumbers: true,
+				readOnly: true,
+				lineWrapping: true,
+				viewportMargin: Infinity,
+			});
+			
+			// CodeMirrorのサイズを調整（高さは自動調整）
+			codeEditor.setSize("100%", null);
+			
+			// コンテンツの高さに合わせて調整
+			setTimeout(() => {
+				codeEditor.refresh();
+				// CodeMirrorの内部高さを取得
+				const scrollInfo = codeEditor.getScrollInfo();
+				const lineHeight = codeEditor.defaultLineHeight();
+				const lineCount = codeEditor.lineCount();
+				const calculatedHeight = lineCount * lineHeight + 30; // パディング用に30px追加
+				const finalHeight = Math.min(calculatedHeight, 600); // 最大600px
+				codeEditor.setSize("100%", finalHeight);
+			}, 100);
+			
+			body.appendChild(codeBlock);
+			
+			lastIndex = codeMatch.index + codeMatch.length;
+		});
+		
+		// 残りのテキストを追加
+		if (lastIndex < text.length) {
+			const textAfter = document.createTextNode(text.slice(lastIndex));
+			body.appendChild(textAfter);
+		}
+	} else {
+		// コードブロックが見つからなかった場合は元のテキストをそのまま表示
+		body.textContent = ` ${text}`;
+	}
+	
 	entry.appendChild(body);
 	return entry;
 }
@@ -21,6 +96,8 @@ function appendUserMessage(message) {
 	const entry = createMessageElement("You", message);
 	chatBox.appendChild(entry);
 	chatBox.scrollTop = chatBox.scrollHeight;
+	// 会話履歴に追加
+	conversationHistory.push({ role: "user", content: message });
 }
 
 function appendSystemMessage(message) {
@@ -32,22 +109,28 @@ function appendSystemMessage(message) {
 
 function applyCodeToEditor(code) {
 	const editorInstance = window.attackEditor || window.editor;
+	const textarea = document.CodingForm2 && document.CodingForm2.attackAIfunc;
+	
+	// CodeMirrorエディタに反映
 	if (editorInstance && typeof editorInstance.setValue === "function") {
 		editorInstance.setValue(code);
 		editorInstance.focus();
-		return true;
 	}
-	const textarea = document.CodingForm2 && document.CodingForm2.attackAIfunc;
+	
+	// フォーム上のテキストエリアにも確実に反映
 	if (textarea) {
 		textarea.value = code;
-		return true;
 	}
-	return false;
+	
+	return !!(editorInstance || textarea);
 }
 
 function appendAIMessage(reply) {
 	const entry = createMessageElement("AI", reply);
 	chatBox.appendChild(entry);
+	// 会話履歴に追加
+	conversationHistory.push({ role: "assistant", content: reply });
+	
 	const codeSnippet = extractFirstCodeBlock(reply);
 	if (codeSnippet) {
 		const actions = document.createElement("div");
@@ -116,10 +199,25 @@ function buildAttackContext(message) {
 	const aiMatch = normalized.match(/ai\s*[-_#]?(\d{1,2})/);
 	let baseCode = "";
 
-	if (aiMatch) {
+	// エディタで編集中の攻め手AIのコードを最優先で取得
+	const editorInstance = window.attackEditor || window.editor;
+	if (editorInstance && typeof editorInstance.getValue === "function") {
+		baseCode = editorInstance.getValue().trim();
+		console.log("CodeMirrorエディタからコードを取得しました:", baseCode.length, "文字");
+	} else {
+		const textarea = document.CodingForm2 && document.CodingForm2.attackAIfunc;
+		if (textarea && textarea.value) {
+			baseCode = textarea.value.trim();
+			console.log("テキストエリアからコードを取得しました:", baseCode.length, "文字");
+		}
+	}
+
+	// メッセージにAI#が明示的に指定されている場合のみ、そのファイルを参照
+	if (!baseCode && aiMatch) {
 		baseCode = fetchFileSync(`AI/AI${aiMatch[1]}.js`) || "";
 	}
 
+	// エディタが空で、AI#も指定されていない場合は、デフォルトのattackAI.jsを参照
 	if (!baseCode && typeof loadAI === "function") {
 		baseCode = loadAI() || "";
 	}
@@ -161,6 +259,7 @@ async function sendChat() {
 	const payload = {
 		message,
 		context,
+		history: conversationHistory.slice(-10), // 直近10件の会話履歴を送信
 	};
 
 	appendUserMessage(message);
