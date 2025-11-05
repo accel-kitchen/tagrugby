@@ -51,6 +51,251 @@ let attack_wins = 0;
 let defense_wins = 0;
 let renderer;
 
+/**
+ * ユーザーコードからセクションを抽出（コメント行を除く）
+ * @param {string} code - ユーザーコード
+ * @param {string} startMarker - 開始マーカー（コメント）
+ * @param {string} endMarker - 終了マーカー（コメント）
+ * @returns {string} 抽出されたコード（ロジック部分のみ）
+ */
+function extractSection(code, startMarker, endMarker) {
+	const startIndex = code.indexOf(startMarker);
+	if (startIndex === -1) return '';
+	
+	// 開始マーカー以降のコードを取得
+	let fromStart = code.slice(startIndex);
+	
+	// 終了マーカーまでのコードを取得
+	const endIndex = fromStart.indexOf(endMarker);
+	if (endIndex !== -1) {
+		fromStart = fromStart.slice(0, endIndex);
+	}
+	
+	// コメント行と空行を除去し、ロジック部分だけを抽出
+	const lines = fromStart.split('\n');
+	let sectionLines = [];
+	let inSection = false;
+	
+	for (const line of lines) {
+		const trimmed = line.trim();
+		// 開始マーカーの行をスキップ
+		if (trimmed === startMarker || trimmed.startsWith(startMarker)) {
+			inSection = true;
+			continue;
+		}
+		// 終了マーカーの行で終了
+		if (trimmed === endMarker || trimmed.startsWith(endMarker)) {
+			break;
+		}
+		// セクション内のコード行を追加
+		if (inSection && trimmed && !trimmed.startsWith('//')) {
+			sectionLines.push(line);
+		} else if (inSection && trimmed.startsWith('//')) {
+			// コメント行も追加（説明用）
+			sectionLines.push(line);
+		}
+	}
+	
+	return sectionLines.join('\n');
+}
+
+/**
+ * 簡潔なコード形式を実行するラッパー関数
+ * @param {string} userCode - ユーザーが書いたコード
+ * @param {Array} pos - 位置情報
+ * @param {number} turn - ターン
+ * @param {number} select - 選択中のプレイヤー
+ * @param {number} ball - ボールを持っているプレイヤー
+ * @param {number} tagged - タグされたか
+ * @returns {Array} [best_move_array, eval_list]
+ */
+function executeSimplifiedAI(userCode, pos, turn, select, ball, tagged) {
+	let eval_list = [];
+	
+	// 移動とパスのセクションを抽出
+	let moveSection = extractSection(userCode, '//移動の評価値計算', '//パスの評価値計算');
+	let passSection = extractSection(userCode, '//パスの評価値計算', '//');
+	
+	// セクションが見つからない場合（マーカーコメントがない場合）、コード全体を使用
+	// move_scoreとpass_scoreで自動判別されるため、コード全体を実行しても問題ない
+	if (!moveSection.trim() && !passSection.trim()) {
+		// マーカーコメントがない場合、コード全体を両方のセクションとして使用
+		moveSection = userCode;
+		passSection = userCode;
+	} else if (!moveSection.trim()) {
+		// 移動セクションが見つからない場合、コード全体を使用
+		moveSection = userCode;
+	} else if (!passSection.trim()) {
+		// パスセクションが見つからない場合、コード全体を使用
+		passSection = userCode;
+	}
+	
+	// 移動候補リストを取得
+	// window.BOARDSIZEが設定されている場合はそれを使用、なければGameConfig.BoardConfig.BOARDSIZEを使用
+	const boardsize = (typeof window !== 'undefined' && window.BOARDSIZE) ? window.BOARDSIZE : GameConfig.BoardConfig.BOARDSIZE;
+	const movablelist = getMovableList(
+		copyArray(pos),
+		turn,
+		select,
+		tagged,
+		boardsize
+	);
+	
+	// パス候補リストを取得
+	const passlist = getPassList(
+		copyArray(pos),
+		turn,
+		select,
+		ball
+	);
+	
+	// step変数を取得（game.stepから）
+	var step = (typeof window !== 'undefined' && window.game && window.game.step !== undefined) 
+		? window.game.step 
+		: 0;
+	
+	// ballとselectをeval内で使用可能にするためvarで宣言
+	var ball = ball;
+	var select = select;
+	
+	// 移動評価を実行
+	for (let i = 0; i < movablelist.length; i++) {
+		// パラメータを取得
+		let distance_defense, distance_defense_min, back_forth_from_goalline;
+		let horizontal_diff_from_ball, vertical_diff_from_ball;
+		let defenseLine, attackLine, deviation_from_uniform_position;
+		
+		[
+			distance_defense,
+			distance_defense_min,
+			back_forth_from_goalline,
+			horizontal_diff_from_ball,
+			vertical_diff_from_ball,
+			defenseLine,
+			attackLine,
+			deviation_from_uniform_position,
+		] = getParamForMove(pos, ball, movablelist[i][0], movablelist[i][1], select);
+		
+		// 実行前のeval_listの長さを記録
+		const beforeLength = eval_list.length;
+		var move_score; // move_score変数を初期化（varを使用してeval内からもアクセス可能にする）
+		
+		// ユーザーコードの移動セクションを実行
+		try {
+			// 変数をスコープ内で利用可能にしてユーザーコードを実行
+			if (moveSection.trim()) {
+				// eval内でmove_scoreに代入できるように、varで宣言したmove_scoreを利用
+				eval(moveSection);
+			}
+		} catch (error) {
+			console.error('移動評価コードの実行エラー:', error);
+			console.error('エラー詳細:', error.stack);
+			// エラーメッセージを表示
+			const errorElement = document.getElementById("codeerror");
+			console.log('codeerror要素:', errorElement);
+			if (errorElement) {
+				// 元のコード内での移動セクションの開始行を計算
+				const userCodeLines = userCode.split('\n');
+				let moveSectionStartLine = 1;
+				for (let i = 0; i < userCodeLines.length; i++) {
+					if (userCodeLines[i].includes('//移動の評価値計算') || userCodeLines[i].includes('//移動')) {
+						moveSectionStartLine = i + 1;
+						break;
+					}
+				}
+				// エラースタックから相対行番号を取得を試みる
+				const errorLineMatch = error.stack ? error.stack.match(/eval.*:(\d+):(\d+)/) : null;
+				if (errorLineMatch) {
+					const relativeLine = parseInt(errorLineMatch[1]);
+					const absoluteLine = moveSectionStartLine + relativeLine - 1;
+					errorElement.innerHTML = `${absoluteLine}行目の${errorLineMatch[2]}文字目でエラーが起こりました。エラー内容：${error.message}`;
+				} else {
+					errorElement.innerHTML = `移動評価コード（${moveSectionStartLine}行目付近）でエラーが起こりました。エラー内容：${error.message}`;
+				}
+			}
+			// エラー時は評価値を0にする（デフォルト値も追加しない）
+			return [[0, 0], []];
+		}
+		
+		// move_score変数が設定されている場合はそれを追加、そうでなければeval_list.push()が呼ばれたかチェック
+		if (typeof move_score !== 'undefined' && move_score !== undefined) {
+			eval_list.push(move_score);
+		} else if (eval_list.length === beforeLength) {
+			// ユーザーコードでeval_list.push()もmove_scoreも設定されなかった場合はデフォルト値を追加
+			eval_list.push(0.1 * Math.random());
+		}
+	}
+	
+	// パス評価を実行
+	for (let i = 0; i < passlist.length; i++) {
+		// パラメータを取得
+		let distance_defense_throw_min, pass_distance, distance_defense_catch_min;
+		
+		[
+			distance_defense_throw_min,
+			pass_distance,
+			distance_defense_catch_min,
+		] = getParamForThrow(pos, ball, i, passlist[i][0], passlist[i][1], select);
+		
+		// 実行前のeval_listの長さを記録
+		const beforeLength = eval_list.length;
+		var pass_score; // pass_score変数を初期化（varを使用してeval内からもアクセス可能にする）
+		
+		// ユーザーコードのパスセクションを実行
+		try {
+			if (passSection.trim()) {
+				// eval内でpass_scoreに代入できるように、varで宣言したpass_scoreを利用
+				eval(passSection);
+			}
+		} catch (error) {
+			console.error('パス評価コードの実行エラー:', error);
+			console.error('エラー詳細:', error.stack);
+			// エラーメッセージを表示
+			const errorElement = document.getElementById("codeerror");
+			console.log('codeerror要素:', errorElement);
+			if (errorElement) {
+				// 元のコード内でのパスセクションの開始行を計算
+				const userCodeLines = userCode.split('\n');
+				let passSectionStartLine = 1;
+				for (let i = 0; i < userCodeLines.length; i++) {
+					if (userCodeLines[i].includes('//パスの評価値計算') || userCodeLines[i].includes('//パス')) {
+						passSectionStartLine = i + 1;
+						break;
+					}
+				}
+				// エラースタックから相対行番号を取得を試みる
+				const errorLineMatch = error.stack ? error.stack.match(/eval.*:(\d+):(\d+)/) : null;
+				if (errorLineMatch) {
+					const relativeLine = parseInt(errorLineMatch[1]);
+					const absoluteLine = passSectionStartLine + relativeLine - 1;
+					errorElement.innerHTML = `${absoluteLine}行目の${errorLineMatch[2]}文字目でエラーが起こりました。エラー内容：${error.message}`;
+				} else {
+					errorElement.innerHTML = `パス評価コード（${passSectionStartLine}行目付近）でエラーが起こりました。エラー内容：${error.message}`;
+				}
+			}
+			// エラー時は評価値を0にする（デフォルト値も追加しない）
+			return [[0, 0], []];
+		}
+		
+		// pass_score変数が設定されている場合はそれを追加、そうでなければeval_list.push()が呼ばれたかチェック
+		if (typeof pass_score !== 'undefined' && pass_score !== undefined) {
+			eval_list.push(pass_score);
+		} else if (eval_list.length === beforeLength) {
+			// ユーザーコードでeval_list.push()もpass_scoreも設定されなかった場合はデフォルト値を追加
+			eval_list.push(0.1 * Math.random());
+		}
+	}
+	
+	// 正常に実行できた場合はエラーメッセージをクリア
+	const errorElement = document.getElementById("codeerror");
+	if (errorElement) {
+		errorElement.innerHTML = "";
+	}
+	
+	// 最善手を返す
+	return returnResult(movablelist, passlist, pos, turn, select, ball, eval_list);
+}
+
 // AttackAI関数を登録（既存コードとの互換性のため）
 // この関数はエディタからコードを実行
 rugby_AI.AttackAI = function (pos, turn, select, ball, tagged) {
@@ -64,30 +309,73 @@ rugby_AI.AttackAI = function (pos, turn, select, ball, tagged) {
 				refreshParam(window.game);
 			}
 			
-			// movablelistとpasslistをグローバルスコープに設定（AIコードからアクセスできるように）
-			const movablelist = getMovableList(
-				copyArray(pos),
-				turn,
-				select,
-				tagged,
-				GameConfig.BoardConfig.BOARDSIZE
-			);
-			const passlist = getPassList(
-				copyArray(pos),
-				turn,
-				select,
-				ball
-			);
-			if (typeof window !== 'undefined') {
-				window.movablelist = movablelist;
-				window.passlist = passlist;
-			}
+			const userCode = window.editor.getValue();
 			
-			// グローバルスコープで実行するため、eval()を使用
-			// eval()は関数のスコープで実行されるため、var return_arr;にアクセス可能
-			eval(window.editor.getValue());
+			// 簡潔な形式かどうかを判定（return_arr や let eval_list などのボイラープレートが含まれていないか）
+			const isSimplified = !userCode.includes('let eval_list') && !userCode.includes('return_arr = returnResult');
+			
+			if (isSimplified) {
+				// 簡潔な形式：ラッパー関数で実行
+				return_arr = executeSimplifiedAI(userCode, pos, turn, select, ball, tagged);
+				// 正常に実行できた場合（エラーでない場合）はエラーメッセージをクリア
+				// executeSimplifiedAI内でエラーが発生した場合は既にエラーメッセージが設定されている
+				if (return_arr && return_arr[0] && return_arr[0][0] !== 0 && return_arr[0][1] !== 0) {
+					const errorElement = document.getElementById("codeerror");
+					if (errorElement) {
+						errorElement.innerHTML = "";
+					}
+				}
+			} else {
+				// 従来の形式：そのまま実行
+				// movablelistとpasslistをグローバルスコープに設定（AIコードからアクセスできるように）
+				// window.BOARDSIZEが設定されている場合はそれを使用、なければGameConfig.BoardConfig.BOARDSIZEを使用
+				const boardsize = (typeof window !== 'undefined' && window.BOARDSIZE) ? window.BOARDSIZE : GameConfig.BoardConfig.BOARDSIZE;
+				const movablelist = getMovableList(
+					copyArray(pos),
+					turn,
+					select,
+					tagged,
+					boardsize
+				);
+				const passlist = getPassList(
+					copyArray(pos),
+					turn,
+					select,
+					ball
+				);
+				if (typeof window !== 'undefined') {
+					window.movablelist = movablelist;
+					window.passlist = passlist;
+				}
+				
+				// グローバルスコープで実行するため、eval()を使用
+				// eval()は関数のスコープで実行されるため、var return_arr;にアクセス可能
+				eval(userCode);
+				// 正常に実行できた場合はエラーメッセージをクリア
+				const errorElement = document.getElementById("codeerror");
+				if (errorElement) {
+					errorElement.innerHTML = "";
+				}
+			}
 		} catch (error) {
 			console.error('AIコードの実行エラー:', error);
+			console.error('エラー詳細:', error.stack);
+			// エラーメッセージを表示
+			const errorElement = document.getElementById("codeerror");
+			console.log('codeerror要素:', errorElement);
+			if (errorElement) {
+				// エラースタックから行番号を取得を試みる
+				const errorLineMatch = error.stack ? error.stack.match(/eval.*:(\d+):(\d+)/) : null;
+				if (errorLineMatch) {
+					errorElement.innerHTML = `${errorLineMatch[1]}行目の${errorLineMatch[2]}文字目でエラーが起こりました。エラー内容：${error.message}`;
+				} else {
+					// 行番号が取得できない場合でもエラーメッセージを表示
+					errorElement.innerHTML = `AIコードの実行エラー: ${error.message}`;
+				}
+			} else {
+				// エラー要素が取得できない場合のデバッグ
+				console.error('codeerror要素が見つかりません');
+			}
 			if (typeof window.clearError === 'function') {
 				window.clearError();
 			}
@@ -128,8 +416,10 @@ if (typeof window !== 'undefined') {
 	window.E = GameConfig.GameCoefficients.E;
 
 	// グローバル関数との互換性のため、エイリアスを作成
-	window.movablelistFunc = (pos, turn, select, tagged) => 
-		getMovableList(pos, turn, select, tagged, GameConfig.BoardConfig.BOARDSIZE);
+	window.movablelistFunc = (pos, turn, select, tagged) => {
+		const boardsize = (typeof window !== 'undefined' && window.BOARDSIZE) ? window.BOARDSIZE : GameConfig.BoardConfig.BOARDSIZE;
+		return getMovableList(pos, turn, select, tagged, boardsize);
+	};
 	window.passlistFunc = getPassList;
 	window.CheckMateFunc = checkMate;
 	window.stepPhaseFunc = stepPhase;
@@ -177,16 +467,27 @@ if (typeof window !== 'undefined') {
  * キャンバスサイズを調整
  */
 function canvas_resize() {
-	const result = resizeCanvas(canvas, ctx, () => {
-		if (renderer && game) {
-			renderer.draw(() => refreshParam(game));
-		}
-	});
+	console.log('[canvas_resize] called, window.BOARDSIZE:', window.BOARDSIZE);
+	const result = resizeCanvas(canvas, ctx, null); // 描画は後で行う
 	if (result && renderer) {
+		console.log('[canvas_resize] result:', {
+			'BLOCKSIZE': result.BLOCKSIZE,
+			'CANVASSIZE': result.CANVASSIZE,
+			'ANALYSISSIZE': result.ANALYSISSIZE,
+			'window.BOARDSIZE': window.BOARDSIZE
+		});
+		// まずrendererのサイズを更新してから描画する
 		renderer.updateSize(result.BLOCKSIZE, window.BOARDSIZE, window.NUMSIZE, result.CANVASSIZE);
 		window.BLOCKSIZE = result.BLOCKSIZE;
 		window.CANVASSIZE = result.CANVASSIZE;
 		window.ANALYSISSIZE = result.ANALYSISSIZE;
+		console.log('[canvas_resize] after update, window.BLOCKSIZE:', window.BLOCKSIZE, 'window.BOARDSIZE:', window.BOARDSIZE);
+		// サイズ更新後に描画
+		if (renderer && game) {
+			renderer.draw(() => refreshParam(game));
+		}
+	} else {
+		console.warn('[canvas_resize] result or renderer is null');
 	}
 }
 
@@ -194,12 +495,31 @@ function canvas_resize() {
  * マウスの移動
  */
 function moveMouse(event) {
-	mouseX = event.offsetX;
-	mouseY = event.offsetY;
-	mouseX = ~~((mouseX / canvas.offsetWidth) * (window.CANVASSIZE + window.NUMSIZE));
-	mouseY = ~~((mouseY / canvas.offsetHeight) * (window.CANVASSIZE + window.NUMSIZE));
-	mouseBlockX = ~~((mouseX - window.NUMSIZE - 0.5) / window.BLOCKSIZE);
-	mouseBlockY = ~~((mouseY - window.NUMSIZE - 0.5) / window.BLOCKSIZE);
+	// event.offsetX/Yは既に論理サイズでの座標（CSSでスケールされた後の座標）
+	// ただし、高DPI対応でcanvas.width/heightが拡大されている場合、
+	// 実際の描画サイズとoffsetWidth/Heightが異なる可能性がある
+	const rect = canvas.getBoundingClientRect();
+	
+	// マウス座標を取得（論理サイズでの座標）
+	mouseX = event.clientX - rect.left;
+	mouseY = event.clientY - rect.top;
+	
+	// 論理サイズでのキャンバスサイズ（CANVASSIZE + NUMSIZE）
+	const logicalCanvasSize = window.CANVASSIZE + window.NUMSIZE;
+	
+	// キャンバスの表示サイズ（canvas.offsetWidth/Height）で正規化
+	mouseX = (mouseX / canvas.offsetWidth) * logicalCanvasSize;
+	mouseY = (mouseY / canvas.offsetHeight) * logicalCanvasSize;
+	
+	// マス座標に変換（NUMSIZEを引いてからBLOCKSIZEで割る）
+	mouseBlockX = Math.floor((mouseX - window.NUMSIZE - 0.5) / window.BLOCKSIZE);
+	mouseBlockY = Math.floor((mouseY - window.NUMSIZE - 0.5) / window.BLOCKSIZE);
+	
+	// 境界チェック（0以上、BOARDSIZE未満）
+	if (mouseBlockX < 0) mouseBlockX = 0;
+	if (mouseBlockX >= window.BOARDSIZE) mouseBlockX = window.BOARDSIZE - 1;
+	if (mouseBlockY < 0) mouseBlockY = 0;
+	if (mouseBlockY >= window.BOARDSIZE) mouseBlockY = window.BOARDSIZE - 1;
 }
 
 /**
@@ -256,12 +576,23 @@ function init() {
 
 	canvas.onmousemove = moveMouse;
 	canvas.onclick = function () {
+		console.log('[canvas.onclick]', {
+			'AIthinkFlag': AIthinkFlag,
+			'mouseBlockX/Y': [mouseBlockX, mouseBlockY],
+			'game.turn': game ? game.turn : 'N/A',
+			'game.select': game ? game.select : 'N/A',
+			'game.ball': game ? game.ball : 'N/A',
+			'game.pos': game ? game.pos : 'N/A'
+		});
 		if (AIthinkFlag == 0) {
+			console.log('[canvas.onclick] calling humanTurn with', [mouseBlockX, mouseBlockY]);
 			game.humanTurn(mouseBlockX, mouseBlockY, () => {
 				if (renderer) {
 					renderer.draw(() => refreshParam(game));
 				}
 			}, gameOver, appState);
+		} else {
+			console.warn('[canvas.onclick] AI is thinking, ignoring click');
 		}
 	};
 
@@ -297,6 +628,7 @@ function init() {
  * リマッチ初期化
  */
 function rematchInit() {
+	console.log('[rematchInit] called, window.BOARDSIZE:', window.BOARDSIZE);
 	document.getElementById("result").innerHTML = "";
 	AIthinkFlag = 0;
 	game.turn = 1;
@@ -311,9 +643,11 @@ function rematchInit() {
 		tag += GameConfig.TAG_IMG;
 	}
 	document.getElementById("tag").innerHTML = tag;
+	console.log('[rematchInit] before renderer.draw, window.BOARDSIZE:', window.BOARDSIZE);
 	if (renderer) {
 		renderer.draw(() => refreshParam(game));
 	}
+	console.log('[rematchInit] after renderer.draw, window.BOARDSIZE:', window.BOARDSIZE);
 }
 
 /**
@@ -340,11 +674,24 @@ function rematch() {
  * 設定
  */
 function config() {
+	console.log('[config] called');
+	console.log('[config] ConfigForm.boardsize.value:', document.ConfigForm.boardsize.value);
+	
 	try {
-		window.BOARDSIZE = parseInt(document.ConfigForm.boardsize.value);
+		const newBoardsize = parseInt(document.ConfigForm.boardsize.value);
+		console.log('[config] setting BOARDSIZE to:', newBoardsize, 'from', window.BOARDSIZE);
+		window.BOARDSIZE = newBoardsize;
 		window.attack_num = parseInt(document.ConfigForm.attackNum.value);
 		window.defense_num = parseInt(document.ConfigForm.defenseNum.value);
 		window.MAXTAG = parseInt(document.ConfigForm.tag_num.value);
+		
+		console.log('[config] updated values:', {
+			'BOARDSIZE': window.BOARDSIZE,
+			'attack_num': window.attack_num,
+			'defense_num': window.defense_num,
+			'MAXTAG': window.MAXTAG
+		});
+		
 		if (typeof pos_editor !== 'undefined') {
 			// 既存コードとの互換性のため、eval()を使用
 			// ただし、エラーハンドリングを追加
@@ -356,13 +703,26 @@ function config() {
 			}
 		}
 	} catch (err) {
+		console.error('[config] error:', err);
 		document.getElementById("poserror").innerHTML = "初期位置の書き方が正しくありません。" + err;
 		return;
 	}
 	window.CATCH_PROBABILITY_LIST = [1, 1, 1, 1, 1, 0.8, 0.8, 0.6, 0.6, 0.4, 0.4];
 	window.POSATTACK = window.POSATTACK.slice(0, window.attack_num);
 	window.POSDEFENSE = window.POSDEFENSE.slice(0, window.defense_num);
+	
+	console.log('[config] calling rematchInit first');
 	rematchInit();
+	console.log('[config] after rematchInit, BOARDSIZE:', window.BOARDSIZE);
+	
+	console.log('[config] calling canvas_resize after rematchInit');
+	// キャンバスサイズを再計算して反映（rematchInitの後に呼ぶ）
+	if (typeof canvas_resize === 'function') {
+		canvas_resize();
+		console.log('[config] after canvas_resize, BOARDSIZE:', window.BOARDSIZE);
+	} else {
+		console.warn('[config] canvas_resize function not found');
+	}
 }
 
 /**
@@ -432,11 +792,26 @@ function restart() {
  */
 function sampleset() {
 	const sample_num = parseInt(document.SampleForm.samplenum.value);
+	console.log('[sampleset] called, setting BOARDSIZE to:', window.sample[sample_num].boardsize, 'from', window.BOARDSIZE);
 	window.BOARDSIZE = window.sample[sample_num].boardsize;
 	window.POSATTACK = window.sample[sample_num].attackpos;
 	window.POSDEFENSE = window.sample[sample_num].defensepos;
 	window.CATCH_PROBABILITY_LIST = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+	// サンプルテストのときは残りタグを1に設定
+	window.MAXTAG = 1;
+	
+	console.log('[sampleset] calling rematchInit first');
 	rematchInit();
+	console.log('[sampleset] after rematchInit, BOARDSIZE:', window.BOARDSIZE);
+	
+	console.log('[sampleset] calling canvas_resize after rematchInit');
+	// キャンバスサイズを再計算して反映（rematchInitの後に呼ぶ）
+	if (typeof canvas_resize === 'function') {
+		canvas_resize();
+		console.log('[sampleset] after canvas_resize, BOARDSIZE:', window.BOARDSIZE);
+	} else {
+		console.warn('[sampleset] canvas_resize function not found');
+	}
 }
 
 /**

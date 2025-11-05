@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AIパラメータ完全ガイド | プログラグビー</title>
+    <meta
+      name="description"
+      content="タグラグビーAIで使用できるすべてのパラメータの詳細解説"
+    />
+    <meta name="keywords" content="プログラグビー, タグラグビー, AI, パラメータ, 解説" />
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
+    <link rel="stylesheet" href="assets/css/custom.css" />
+
+    <style>
+      .instruction-hero {
+        background: linear-gradient(135deg, rgba(44, 123, 229, 0.12) 0%, rgba(255, 111, 91, 0.08) 100%);
+        padding: 4rem 0;
+        margin-bottom: 3rem;
+      }
+      .parameter-card {
+        background: var(--glass-surface);
+        border: 1px solid var(--glass-border);
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-soft);
+        transition: all 0.3s ease;
+      }
+      .parameter-card:hover {
+        box-shadow: var(--shadow-hover);
+        transform: translateY(-2px);
+      }
+      .parameter-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent-secondary);
+        margin-bottom: 0.5rem;
+        font-family: 'Inter', monospace;
+      }
+      .parameter-type {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: var(--chip-bg);
+        border: 1px solid var(--chip-border);
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--accent-secondary);
+        margin-bottom: 1rem;
+      }
+      .parameter-description {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+      }
+      .parameter-detail {
+        background: rgba(44, 123, 229, 0.04);
+        border-left: 4px solid var(--accent-secondary);
+        padding: 1rem 1.5rem;
+        margin: 1rem 0;
+        border-radius: 0.5rem;
+      }
+      .parameter-detail strong {
+        color: var(--accent-secondary);
+      }
+      .example-code {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        overflow-x: auto;
+        margin: 1rem 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      .example-code .keyword { color: #569cd6; }
+      .example-code .string { color: #ce9178; }
+      .example-code .number { color: #b5cea8; }
+      .example-code .comment { color: #6a9955; }
+      .tip-box {
+        background: linear-gradient(135deg, rgba(22, 160, 133, 0.1) 0%, rgba(44, 123, 229, 0.08) 100%);
+        border: 2px solid var(--accent-emerald);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        margin: 2rem 0;
+      }
+      .tip-box::before {
+        content: "💡 ポイント";
+        display: block;
+        font-weight: 700;
+        color: var(--accent-emerald);
+        margin-bottom: 0.75rem;
+        font-size: 1.1rem;
+      }
+      .section-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 3rem 0 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 3px solid var(--accent-secondary);
+      }
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--accent-secondary);
+        text-decoration: none;
+        font-weight: 600;
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+      }
+      .back-link:hover {
+        color: var(--accent-primary);
+        transform: translateX(-4px);
+      }
+    </style>
+  </head>
+  <body class="app-body">
+    <header class="app-header">
+      <nav class="app-nav container-xxl">
+        <a class="app-brand" href="index.html">
+          <span class="app-brand__icon">
+            <span class="material-symbols-outlined">sports_rugby</span>
+          </span>
+          <span>プログラグビー</span>
+        </a>
+      </nav>
+    </header>
+
+    <main class="container-xxl py-5">
+      <a href="index.html" class="back-link">
+        <span class="material-symbols-outlined">arrow_back</span>
+        メインページに戻る
+      </a>
+
+      <div class="instruction-hero text-center">
+        <div class="container-xxl">
+          <span class="eyebrow">Complete Guide</span>
+          <h1 class="display-4 fw-bold mb-3">AIパラメータ完全ガイド</h1>
+          <p class="lead text-muted" style="max-width: 800px; margin: 0 auto;">
+            タグラグビーAIで使用できるすべてのパラメータを、実例と共に詳しく解説します。
+            各パラメータの意味、計算方法、使い方を丁寧に説明していますので、初心者の方でも安心してご覧いただけます。
+          </p>
+        </div>
+      </div>
+
+      <!-- 目次 -->
+      <div class="parameter-card">
+        <h2 class="fw-bold mb-4">📑 目次</h2>
+        <ul class="list-unstyled" style="line-height: 2.5;">
+          <li><a href="#overview" class="text-decoration-none">1. はじめに</a></li>
+          <li><a href="#common-variables" class="text-decoration-none">2. 共通で使用可能な変数</a></li>
+          <li><a href="#move-parameters" class="text-decoration-none">3. 移動評価で使用可能なパラメータ</a></li>
+          <li><a href="#pass-parameters" class="text-decoration-none">4. パス評価で使用可能なパラメータ</a></li>
+          <li><a href="#usage-examples" class="text-decoration-none">5. 実践的な使用例</a></li>
+          <li><a href="#best-practices" class="text-decoration-none">6. ベストプラクティス</a></li>
+        </ul>
+      </div>
+
+      <!-- はじめに -->
+      <section id="overview">
+        <h2 class="section-title">1. はじめに</h2>
+        <div class="parameter-card">
+          <p class="parameter-description">
+            このガイドでは、タグラグビーAIをプログラミングする際に使用できるすべてのパラメータについて、
+            詳しく解説しています。各パラメータは、ゲームの状態を数値化したものであり、
+            これらの値を組み合わせることで、AIの行動を制御することができます。
+          </p>
+          <div class="tip-box">
+            <p style="margin: 0;">
+              パラメータは大きく分けて3つのカテゴリに分類されます：
+              <strong>共通変数</strong>（step, ball, select）、
+              <strong>移動評価パラメータ</strong>（移動の評価に使用）、
+              <strong>パス評価パラメータ</strong>（パスの評価に使用）です。
+              それぞれのパラメータは、移動評価のループまたはパス評価のループ内で自動的に計算され、
+              あなたのコードから直接使用することができます。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 共通変数 -->
+      <section id="common-variables">
+        <h2 class="section-title">2. 共通で使用可能な変数</h2>
+
+        <div class="parameter-card">
+          <div class="parameter-name">step</div>
+          <span class="parameter-type">number（数値）</span>
+          <p class="parameter-description">
+            現在のステップ数（行動回数）を表す変数です。ゲームが開始されてから、何回目の行動かを数えています。
+            この値を使うことで、ゲームの進行状況に応じた戦略を実装できます。
+          </p>
+          <div class="parameter-detail">
+            <strong>値の範囲：</strong>0以上の整数<br>
+            <strong>使用例：</strong>ゲーム序盤（step < 5）と中盤以降で異なる戦略を適用する
+          </div>
+          <div class="example-code">
+<span class="comment">// ゲーム序盤は慎重に、中盤以降は積極的に</span>
+<span class="keyword">if</span> (step < <span class="number">5</span>) {
+  <span class="comment">// 序盤の戦略</span>
+  move_score = <span class="number">-15</span> * back_forth_from_goalline;
+} <span class="keyword">else</span> {
+  <span class="comment">// 中盤以降の戦略</span>
+  move_score = <span class="number">-10</span> * back_forth_from_goalline;
+}
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <div class="parameter-name">ball</div>
+          <span class="parameter-type">number（数値）</span>
+          <p class="parameter-description">
+            ボールを持っているプレイヤーの番号を表します。プレイヤー番号は0から始まります。
+            この値を使うことで、ボール保持者かどうかを判定したり、ボール保持者に応じた戦略を実装できます。
+          </p>
+          <div class="parameter-detail">
+            <strong>値の範囲：</strong>0以上の整数（プレイヤー数-1まで）<br>
+            <strong>使用例：</strong>現在のプレイヤー（select）がボールを持っているかを判定
+          </div>
+          <div class="example-code">
+<span class="comment">// ボール保持者と非保持者で異なる評価を行う</span>
+<span class="keyword">if</span> (ball === select) {
+  <span class="comment">// ボール保持者の場合：前進を重視</span>
+  move_score = <span class="number">20</span> * back_forth_from_goalline;
+} <span class="keyword">else</span> {
+  <span class="comment">// 非保持者の場合：ボール保持者に近づく</span>
+  move_score = <span class="number">-6</span> * vertical_diff_from_ball * vertical_diff_from_ball;
+}
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <div class="parameter-name">select</div>
+          <span class="parameter-type">number（数値）</span>
+          <p class="parameter-description">
+            現在行動するプレイヤーの番号を表します。プレイヤー番号は0から始まります。
+            この値を使うことで、特定のプレイヤーに応じた戦略を実装できます。
+          </p>
+          <div class="parameter-detail">
+            <strong>値の範囲：</strong>0以上の整数（プレイヤー数-1まで）<br>
+            <strong>使用例：</strong>特定のプレイヤー（例：1人目）に特別な戦略を適用
+          </div>
+          <div class="example-code">
+<span class="comment">// 1人目のプレイヤーに特別な戦略を適用</span>
+<span class="keyword">if</span> (select === <span class="number">0</span>) {
+  <span class="comment">// 1人目の特別な評価</span>
+  move_score = <span class="number">10</span> * distance_defense_min;
+} <span class="keyword">else</span> {
+  <span class="comment">// その他のプレイヤーの評価</span>
+  move_score = <span class="number">5</span> * distance_defense_min;
+}
+          </div>
+        </div>
+      </section>
+
+      <!-- 移動評価パラメータ -->
+      <section id="move-parameters">
+        <h2 class="section-title">3. 移動評価で使用可能なパラメータ</h2>
+
+        <div class="parameter-card">
+          <div class="parameter-name">distance_defense</div>
+          <span class="parameter-type">Array（配列）</span>
+          <p class="parameter-description">
+            現在の位置から、すべての守り手（ディフェンス）までの距離を配列で格納しています。
+            各要素は、対応する守り手との距離を表します。この配列を使うことで、
+            すべての守り手との距離を個別に評価できます。
+          </p>
+          <div class="parameter-detail">
+            <strong>値の範囲：</strong>各要素は0以上の数値（距離）<br>
+            <strong>使用例：</strong>最も近い守り手との距離を取得する場合、distance_defense_minを使用することをお勧めします
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <div class="parameter-name">distance_defense_min</div>
+          <span class="parameter-type">number（数値）</span>
+          <p class="parameter-description">
+            すべての守り手の中で、最も近い守り手との距離を表します。
+            この値が大きいほど、守り手から離れている（安全）ことを意味します。
+            移動の評価において、最も重要なパラメータの一つです。
+          </p>
+          <div class="parameter-detail">
+            <strong>値の範囲：</strong>0以上の数値（距離が大きいほど安全）<br>
+            <strong>推奨係数：</strong>5〜15程度（守り手から離れることを重視する場合）
+          </div>
+          <div class="example-code">
+<span class="comment">// 守り手から離れることを重視する</span>
+move_score = <span class="number">10</span> * distance_defense_min;
+
+<span class="comment">// 守り手から離れることを重視しつつ、前進も考慮</span>
+move_score = <span class="number">8</span> * distance_defense_min + <span class="number">5</span> * back_forth_from_goalline;
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <div class="parameter-name">back_forth_from_goalline</div>
+          <span class="parameter-type">number（数値）</span>
+          <p class="parameter-description">
+            ゴールラインに対する前後の移動距離を表します。
+            前進すると正の値、後退すると負の値、横移動は0になります。
+            この値を使うことで、前進を促したり、後退を促したりできます。
+          </p>
+          <div class="parameter-detail">
+            <strong>値の範囲：</strong>正の値（前進）、負の値（後退）、0（横移動）<br>
+            <strong>推奨係数：</strong>-15〜-10（後退を重視）、10〜20（前進を重視）
+          </div>
+          <div class="example-code">
+<span class="comment">// 後退を重視する（後退は+15、前進は-15）</span>
+move_score = <span class="number">-15</span> * back_forth_from_goalline;
+
+<span class="comment">// 前進を重視する（前進は+20、後退は-20）</span>
+move_score = <span class="number">20</span> * back_forth_from_goalline;
+          </div>
+          <div class="tip-box">
+            <p style="margin: 0;">
+              <strong>重要なポイント：</strong>係数に負の値を使うと後退を重視し、
+              正の値を使うと前進を重視します。例えば、-15 * back_forth_from_goalline の場合、
+              後退すると値がプラス（良い）、前進すると値がマイナス（悪い）になります。
+            </p>
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <div class="parameter-name">horizontal_diff_from_ball</div>
+          <span class="parameter-type">number（数値）</span>
+          <p class="parameter-description">
+            ボールを持っているプレイヤーとの横方向の距離（絶対値）を表します。
+            ボールとの横の距離が大きいほど、値が大きくなります。
+            この値を使うことで、ボール保持者と横に並ぶことを促したり、横に離れることを促したりできます。
+          </p>
+          <div class="parameter-detail">
+            <strong>値の範囲：</strong>0以上の数値（距離が大きいほど値が大きい）<br>
+            <strong>使用例：</strong>ボール保持者と横に並ぶことを重視する場合、この値を小さくする
+          </div>
+          <div class="example-code">
+<span class="comment">// ボール保持者と横に並ぶことを重視</span>
+move_score = <span class="number">-5</span> * horizontal_diff_from_ball;
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <div class="parameter-name">vertical_diff_from_ball</div>
+          <span class="parameter-type">number（数値）</span>
+          <p class="parameter-description">
+            ボールを持っているプレイヤーとの縦方向の距離を表します。
+            正の値はボールより前方、負の値はボールより後方を意味します。
+            この値を使うことで、ボール保持者と縦に並ぶことを促したり、前後に散らばることを促したりできます。
+          </p>
+          <div class="parameter-detail">
+            <strong>値の範囲：</strong>正の値（前方）、負の値（後方）<br>
+            <strong>使用例：</strong>ボール保持者と同じ縦位置を保つことを重視する場合、この値の二乗を使う
+          </div>
+          <div class="example-code">
+<span class="comment">// ボール保持者と同じ縦位置を保つことを重視（差の二乗で減点）</span>
+move_score = <span class="number">-6</span> * vertical_diff_from_ball * vertical_diff_from_ball;
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <div class="parameter-name">defenseLine</div>
+          <span class="parameter-type">Array（配列）</span>
+          <p class="parameter-description">
+            守り手（ディフェンス）の左からの順番を表した配列です。
+            左から右に向かって、守り手のIDが格納されています。
+            この配列を使うことで、守り手の配置を分析できます。
+          </p>
+          <div class="parameter-detail">
+            <strong>値の範囲：</strong>配列の各要素はプレイヤーID（0以上の整数）<br>
+            <strong>使用例：</strong>守り手の配置を分析する高度な戦略で使用
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <div class="parameter-name">attackLine</div>
+          <span class="parameter-type">Array（配列）</span>
+          <p class="parameter-description">
+            攻め手（アタック）の左からの順番を表した配列です。
+            左から右に向かって、攻め手のIDが格納されています。
+            この配列を使うことで、攻め手の配置を分析できます。
+          </p>
+          <div class="parameter-detail">
+            <strong>値の範囲：</strong>配列の各要素はプレイヤーID（0以上の整数）<br>
+            <strong>使用例：</strong>攻め手の配置を分析する高度な戦略で使用
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <div class="parameter-name">deviation_from_uniform_position</div>
+          <span class="parameter-type">number（数値）</span>
+          <p class="parameter-description">
+            均等に横方向に並ぶ場合の場所からのずれを表します。
+            この値が小さいほど、均等に並んでいることを意味します。
+            この値を使うことで、攻め手が均等に横に並ぶことを促せます。
+          </p>
+          <div class="parameter-detail">
+            <strong>値の範囲：</strong>0以上の数値（値が小さいほど均等に近い）<br>
+            <strong>使用例：</strong>均等に並ぶことを重視する場合、この値を小さくする
+          </div>
+          <div class="example-code">
+<span class="comment">// 均等に並ぶことを重視</span>
+move_score = <span class="number">-3</span> * deviation_from_uniform_position;
+          </div>
+        </div>
+      </section>
+
+      <!-- パス評価パラメータ -->
+      <section id="pass-parameters">
+        <h2 class="section-title">4. パス評価で使用可能なパラメータ</h2>
+
+        <div class="parameter-card">
+          <div class="parameter-name">distance_defense_throw_min</div>
+          <span class="parameter-type">number（数値）</span>
+          <p class="parameter-description">
+            ボールを持っているプレイヤー（パスを出す側）とディフェンスとの最短距離を表します。
+            この値が大きいほど、パスを出す側が守り手から離れている（安全）ことを意味します。
+            パスを出す際の安全性を評価する重要なパラメータです。
+          </p>
+          <div class="parameter-detail">
+            <strong>値の範囲：</strong>0以上の数値（値が大きいほど安全）<br>
+            <strong>推奨係数：</strong>4〜10程度（パスを出す側の安全性を重視する場合）
+          </div>
+          <div class="example-code">
+<span class="comment">// パスを出す側が守り手から離れていることを重視</span>
+pass_score = <span class="number">8</span> * distance_defense_throw_min;
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <div class="parameter-name">pass_distance</div>
+          <span class="parameter-type">number（数値）</span>
+          <p class="parameter-description">
+            パスの距離（ユークリッド距離）を表します。
+            パス距離が短いほど成功率が高いと考えられます。
+            この値が小さいほど、短いパスであることを意味します。
+          </p>
+          <div class="parameter-detail">
+            <strong>値の範囲：</strong>0以上の数値（値が小さいほど短いパス）<br>
+            <strong>推奨係数：</strong>-3〜-5程度（短いパスを重視する場合）
+          </div>
+          <div class="example-code">
+<span class="comment">// パス距離が短いことを重視（短いパスほど高評価）</span>
+pass_score = <span class="number">-4</span> * pass_distance;
+
+<span class="comment">// パス距離が短く、受け手が安全なことを重視</span>
+pass_score = <span class="number">-3</span> * pass_distance + <span class="number">6</span> * distance_defense_catch_min;
+          </div>
+          <div class="tip-box">
+            <p style="margin: 0;">
+              <strong>重要なポイント：</strong>係数に負の値を使うと短いパスを重視し、
+              正の値を使うと長いパスを重視します。一般的には、短いパスの方が成功率が高いため、
+              負の係数を使うことが推奨されます。
+            </p>
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <div class="parameter-name">distance_defense_catch_min</div>
+          <span class="parameter-type">number（数値）</span>
+          <p class="parameter-description">
+            パスを受けるプレイヤーとディフェンスとの最短距離を表します。
+            この値が大きいほど、パスを受ける側が守り手から離れている（安全）ことを意味します。
+            パスを受ける際の安全性を評価する重要なパラメータです。
+          </p>
+          <div class="parameter-detail">
+            <strong>値の範囲：</strong>0以上の数値（値が大きいほど安全）<br>
+            <strong>推奨係数：</strong>6〜10程度（パスを受ける側の安全性を重視する場合）
+          </div>
+          <div class="example-code">
+<span class="comment">// パスを受ける側が守り手から離れていることを重視</span>
+pass_score = <span class="number">10</span> * distance_defense_catch_min;
+
+<span class="comment">// パスを受ける側の安全性と、パス距離のバランスを取る</span>
+pass_score = <span class="number">6</span> * distance_defense_catch_min - <span class="number">3</span> * pass_distance;
+          </div>
+        </div>
+      </section>
+
+      <!-- 実践的な使用例 -->
+      <section id="usage-examples">
+        <h2 class="section-title">5. 実践的な使用例</h2>
+
+        <div class="parameter-card">
+          <h3 class="fw-bold mb-3">例1: ボール保持者と非保持者で異なる戦略</h3>
+          <p class="parameter-description">
+            ボール保持者は前進を重視し、非保持者はボール保持者に近づく戦略の例です。
+          </p>
+          <div class="example-code">
+<span class="comment">//移動の評価値計算</span>
+<span class="keyword">if</span> (ball === select) {
+  <span class="comment">// ボール保持者は前進を重視</span>
+  move_score = 
+    <span class="number">20</span> * back_forth_from_goalline +  <span class="comment">// 前進を強く評価</span>
+    <span class="number">4</span> * distance_defense_min;        <span class="comment">// 安全性も考慮</span>
+} <span class="keyword">else</span> {
+  <span class="comment">// 非保持者はボール保持者に近づく</span>
+  move_score = 
+    <span class="number">5</span> * distance_defense_min -                              <span class="comment">// 守り手から離れる</span>
+    <span class="number">6</span> * vertical_diff_from_ball * vertical_diff_from_ball;  <span class="comment">// ボール保持者と同じ縦位置</span>
+}
+
+<span class="comment">//パスの評価値計算</span>
+<span class="comment">// 安全で短いパスを重視</span>
+pass_score = 
+  <span class="number">6</span> * distance_defense_catch_min -  <span class="comment">// 受け手が安全</span>
+  <span class="number">3</span> * pass_distance +               <span class="comment">// パス距離が短い</span>
+  <span class="number">4</span> * distance_defense_throw_min;   <span class="comment">// 出す側も安全</span>
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <h3 class="fw-bold mb-3">例2: ゲーム序盤と中盤以降で異なる戦略</h3>
+          <p class="parameter-description">
+            ゲーム序盤は慎重に後退し、中盤以降は積極的に前進する戦略の例です。
+          </p>
+          <div class="example-code">
+<span class="comment">//移動の評価値計算</span>
+<span class="keyword">if</span> (step < <span class="number">5</span>) {
+  <span class="comment">// 序盤：慎重に後退</span>
+  move_score = 
+    <span class="number">-15</span> * back_forth_from_goalline +  <span class="comment">// 後退を重視</span>
+    <span class="number">8</span> * distance_defense_min;        <span class="comment">// 守り手から離れる</span>
+} <span class="keyword">else</span> {
+  <span class="comment">// 中盤以降：積極的に前進</span>
+  move_score = 
+    <span class="number">10</span> * back_forth_from_goalline +   <span class="comment">// 前進を重視</span>
+    <span class="number">5</span> * distance_defense_min;        <span class="comment">// 安全性も考慮</span>
+}
+
+<span class="comment">//パスの評価値計算</span>
+<span class="keyword">if</span> (step < <span class="number">5</span>) {
+  <span class="comment">// 序盤：パスを出す側の安全性を重視</span>
+  pass_score = <span class="number">10</span> * distance_defense_throw_min;
+} <span class="keyword">else</span> {
+  <span class="comment">// 中盤以降：短いパスを重視</span>
+  pass_score = <span class="number">-4</span> * pass_distance;
+}
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <h3 class="fw-bold mb-3">例3: 消極的で後退を重視する戦略</h3>
+          <p class="parameter-description">
+            常に後退を重視し、守り手から離れることを優先する消極的な戦略の例です。
+          </p>
+          <div class="example-code">
+<span class="comment">//移動の評価値計算</span>
+<span class="comment">// 後退を重視し、守り手から離れることを優先</span>
+move_score = 
+  <span class="number">-12</span> * back_forth_from_goalline +  <span class="comment">// 後退を重視</span>
+  <span class="number">8</span> * distance_defense_min;        <span class="comment">// 守り手から離れる</span>
+
+<span class="comment">//パスの評価値計算</span>
+<span class="comment">// パスを出す側と受ける側の安全性を重視</span>
+pass_score = 
+  <span class="number">6</span> * distance_defense_catch_min +  <span class="comment">// 受け手が安全</span>
+  <span class="number">4</span> * distance_defense_throw_min;   <span class="comment">// 出す側も安全</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ベストプラクティス -->
+      <section id="best-practices">
+        <h2 class="section-title">6. ベストプラクティス</h2>
+
+        <div class="parameter-card">
+          <h3 class="fw-bold mb-3">係数の調整について</h3>
+          <p class="parameter-description">
+            パラメータに掛ける係数は、戦略の優先度を表します。係数が大きいほど、そのパラメータが重視されます。
+            ただし、係数を大きくしすぎると、他の要素が無視されてしまう可能性があるため、
+            バランスを取ることが重要です。
+          </p>
+          <div class="tip-box">
+            <p style="margin: 0;">
+              <strong>推奨される係数の範囲：</strong><br>
+              • 移動評価：各パラメータに5〜20程度の係数<br>
+              • パス評価：各パラメータに3〜10程度の係数<br>
+              • まずは小さな係数から始めて、徐々に調整していくことをお勧めします。
+            </p>
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <h3 class="fw-bold mb-3">パラメータの組み合わせ</h3>
+          <p class="parameter-description">
+            複数のパラメータを組み合わせることで、より洗練された戦略を実装できます。
+            例えば、前進を重視しつつ、守り手から離れることも考慮するなど、
+            複数の要素をバランスよく組み合わせることが重要です。
+          </p>
+          <div class="example-code">
+<span class="comment">// 複数のパラメータを組み合わせた例</span>
+move_score = 
+  <span class="number">-10</span> * back_forth_from_goalline +  <span class="comment">// 後退を重視</span>
+  <span class="number">8</span> * distance_defense_min +        <span class="comment">// 守り手から離れる</span>
+  <span class="number">-3</span> * deviation_from_uniform_position; <span class="comment">// 均等に並ぶ</span>
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <h3 class="fw-bold mb-3">条件分岐の活用</h3>
+          <p class="parameter-description">
+            <code>step</code>、<code>ball</code>、<code>select</code>などの変数を使った条件分岐により、
+            状況に応じた柔軟な戦略を実装できます。ゲームの進行状況やプレイヤーの状態に応じて、
+            異なる評価式を使い分けることができます。
+          </p>
+          <div class="tip-box">
+            <p style="margin: 0;">
+              <strong>条件分岐の例：</strong><br>
+              • ボール保持者かどうかで分岐（ball === select）<br>
+              • ゲーム序盤かどうかで分岐（step < 5）<br>
+              • 特定のプレイヤーかどうかで分岐（select === 0）<br>
+              これらの条件分岐を組み合わせることで、より複雑な戦略を実装できます。
+            </p>
+          </div>
+        </div>
+
+        <div class="parameter-card">
+          <h3 class="fw-bold mb-3">デバッグのヒント</h3>
+          <p class="parameter-description">
+            コードにエラーがある場合、<code>codeerror</code>要素にエラーメッセージが表示されます。
+            エラーメッセージを確認して、問題を修正してください。
+            また、係数を調整する際は、少しずつ変更して、その効果を確認することをお勧めします。
+          </p>
+          <div class="parameter-detail">
+            <strong>よくあるエラー：</strong><br>
+            • 変数名のタイプミス（例：move_score と moveScore）<br>
+            • 未定義の変数の使用<br>
+            • 構文エラー（括弧の対応など）<br>
+            これらのエラーは、エラーメッセージを確認することで、簡単に修正できます。
+          </div>
+        </div>
+      </section>
+
+      <div class="parameter-card text-center mt-5">
+        <h3 class="fw-bold mb-3">おわりに</h3>
+        <p class="parameter-description">
+          このガイドでは、タグラグビーAIで使用できるすべてのパラメータについて詳しく解説しました。
+          パラメータを組み合わせることで、様々な戦略を実装できます。
+          ぜひ、このガイドを参考にして、自分だけの戦略を実装してみてください。
+        </p>
+        <a href="index.html" class="btn btn-primary mt-3">
+          <span class="material-symbols-outlined">arrow_back</span>
+          メインページに戻る
+        </a>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <div class="container-xxl d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <span>プログラグビー</span>
+      </div>
+    </footer>
+  </body>
+</html>
+
+
+
+
+

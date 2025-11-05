@@ -238,9 +238,17 @@ export class CanvasRenderer {
 			ballX = passPos.x;
 			ballY = passPos.y;
 		} else {
-			// 通常位置
-			ballX = this.gameState.pos[1][this.gameState.ball][0];
-			ballY = this.gameState.pos[1][this.gameState.ball][1];
+			// ボールを持っているプレイヤーが移動アニメーション中かチェック
+			const ballPlayerMovePos = this.animationManager.getMovePosition(1, this.gameState.ball);
+			if (ballPlayerMovePos) {
+				// 移動アニメーション中：ボールも一緒に動く
+				ballX = ballPlayerMovePos.x;
+				ballY = ballPlayerMovePos.y;
+			} else {
+				// 通常位置
+				ballX = this.gameState.pos[1][this.gameState.ball][0];
+				ballY = this.gameState.pos[1][this.gameState.ball][1];
+			}
 		}
 
 		if (this.ballImage) {

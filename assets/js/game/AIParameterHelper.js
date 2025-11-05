@@ -54,8 +54,10 @@ export function getParamForMove(pos, ball, x, y, select) {
 	);
 	const [defenseLine, attackLine] = posSortTraverse(pos); // defenseLine,attackLineはそれぞれ左からエージェントのIDをリストにしたもの。
 
+	// window.BOARDSIZEが設定されている場合はそれを使用、なければBoardConfig.BOARDSIZEを使用
+	const boardsize = (typeof window !== 'undefined' && window.BOARDSIZE) ? window.BOARDSIZE : BoardConfig.BOARDSIZE;
 	const deviation_from_uniform_position = Math.abs(
-		(attackLine[select] / (pos[1].length - 1)) * BoardConfig.BOARDSIZE - x
+		(attackLine[select] / (pos[1].length - 1)) * boardsize - x
 	); // 均等に横方向に並ぶ場合の場所からのずれ
 	return [
 		distance_defense,

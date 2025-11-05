@@ -109,15 +109,15 @@
                 <div class="form-hint" id="codeerror"></div>
                 <textarea class="form-control" name="attackAIfunc" rows="18"></textarea>
               </div>
-              <div class="row g-3">
+              <div class="row g-3 mt-4">
                 <div class="col-md-6">
                   <button
                     type="button"
                     class="btn btn-primary w-100"
-                    onclick="window.open('https://kaduo.notion.site/Tag-Rugby-3a195932bcf04474be9fabd3972b3cea', '_blank')"
+                    onclick="window.open('instruction.html', '_blank')"
                   >
                     <span class="material-symbols-outlined">lightbulb</span>
-                    コードサンプル
+                    マニュアル
                   </button>
                 </div>
                 <div class="col-md-6">
@@ -523,7 +523,7 @@
 
       function loadAI() {
         let xmlHttp = new XMLHttpRequest();
-        xmlHttp.open("GET", "assets/js/attackAI.js", false);
+        xmlHttp.open("GET", "assets/js/attackAI-simple.js", false);
         xmlHttp.send(null);
         return xmlHttp.responseText;
       }

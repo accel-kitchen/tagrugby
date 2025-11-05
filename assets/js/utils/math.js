@@ -34,6 +34,10 @@ export function sum(arr) {
  * @returns {number} キャッチ確率
  */
 export function catchProb(x1, y1, x2, y2, catchProbabilityList) {
+	// 6×6の盤面の場合は常に100%の成功率
+	if (typeof window !== 'undefined' && window.BOARDSIZE === 6) {
+		return 1;
+	}
 	const dis = Math.round(distance(x2 - x1, y2 - y1));
 	if (dis > catchProbabilityList.length - 1) {
 		return 0;

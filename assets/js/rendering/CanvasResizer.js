@@ -46,8 +46,12 @@ export function resizeCanvas(canvas, ctx, drawFunc) {
 	ctx.scale(dpr, dpr);
 
 	// 論理サイズで計算
-	const CANVASSIZE = logicalSize - BoardConfig.NUMSIZE - 1;
-	const BLOCKSIZE = CANVASSIZE / BoardConfig.BOARDSIZE;
+	// window.BOARDSIZEが設定されている場合はそれを使用、なければBoardConfig.BOARDSIZEを使用
+	const boardsize = (typeof window !== 'undefined' && window.BOARDSIZE) ? window.BOARDSIZE : BoardConfig.BOARDSIZE;
+	// CANVASSIZEはNUMSIZEを除いた描画領域のサイズ
+	// 最後のマスまで描画できるように、-1を削除（境界線の0.5ピクセル分は考慮済み）
+	const CANVASSIZE = logicalSize - BoardConfig.NUMSIZE;
+	const BLOCKSIZE = CANVASSIZE / boardsize;
 	const ANALYSISSIZE = 0.5 * BLOCKSIZE;
 
 	if (drawFunc) {

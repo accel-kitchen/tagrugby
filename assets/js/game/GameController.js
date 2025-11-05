@@ -79,15 +79,22 @@ export class GameController {
 			}
 		}
 
+		console.log('[GameController.humanTurn] called with', {x, y});
+		console.log('[GameController.humanTurn] window.BOARDSIZE:', typeof window !== 'undefined' ? window.BOARDSIZE : 'N/A');
+		console.log('[GameController.humanTurn] GameConfig.BoardConfig.BOARDSIZE:', GameConfig.BoardConfig.BOARDSIZE);
+		
 		if (this.select == 0 && this.turn == 1) {
 			this.step += 1;
 		}
+		// window.BOARDSIZEが設定されている場合はそれを使用、なければGameConfig.BoardConfig.BOARDSIZEを使用
+		const boardsize = (typeof window !== 'undefined' && window.BOARDSIZE !== undefined) ? window.BOARDSIZE : GameConfig.BoardConfig.BOARDSIZE;
+		console.log('[GameController.humanTurn] using boardsize:', boardsize, '(window.BOARDSIZE:', typeof window !== 'undefined' ? window.BOARDSIZE : 'N/A', ')');
 		const movablelist = getMovableList(
 			copyArray(this.pos),
 			this.turn,
 			this.select,
 			this.tagged,
-			GameConfig.BoardConfig.BOARDSIZE
+			boardsize
 		);
 		const passlist = getPassList(
 			copyArray(this.pos),
@@ -95,6 +102,9 @@ export class GameController {
 			this.select,
 			this.ball
 		);
+		
+		console.log('[GameController.humanTurn] movablelist', movablelist, 'passlist', passlist);
+		console.log('[GameController.humanTurn] checking if', [x, y], 'is in movablelist or passlist');
 
 		// 一回休みの場合の処理
 		if (this.select == this.wait) {
@@ -596,12 +606,14 @@ export class GameController {
 		let nextmove = [];
 		let eval_list = [];
 
+		// window.BOARDSIZEが設定されている場合はそれを使用、なければGameConfig.BoardConfig.BOARDSIZEを使用
+		const boardsize = (typeof window !== 'undefined' && window.BOARDSIZE) ? window.BOARDSIZE : GameConfig.BoardConfig.BOARDSIZE;
 		const movablelist = getMovableList(
 			copyArray(this.pos),
 			this.turn,
 			this.select,
 			this.tagged,
-			GameConfig.BoardConfig.BOARDSIZE
+			boardsize
 		);
 		const passlist = getPassList(
 			copyArray(this.pos),

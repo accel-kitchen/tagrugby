@@ -6,6 +6,17 @@ const loadingIndicator = document.getElementById("loadingIndicator");
 // 会話履歴を保持する配列
 const conversationHistory = [];
 
+// チャットボックスの高さを調整
+function adjustChatBoxHeight() {
+	if (chatBox.children.length === 0) {
+		chatBox.style.minHeight = '0';
+	} else {
+		// コンテンツの高さに応じて調整（最大840pxまで）
+		const scrollHeight = chatBox.scrollHeight;
+		chatBox.style.minHeight = Math.min(scrollHeight, 840) + 'px';
+	}
+}
+
 function createMessageElement(role, text) {
 	const entry = document.createElement("div");
 	entry.className = `chat-entry chat-${role.toLowerCase()}`;
@@ -64,12 +75,11 @@ function createMessageElement(role, text) {
 			// コンテンツの高さに合わせて調整
 			setTimeout(() => {
 				codeEditor.refresh();
-				// CodeMirrorの内部高さを取得
-				const scrollInfo = codeEditor.getScrollInfo();
-				const lineHeight = codeEditor.defaultLineHeight();
-				const lineCount = codeEditor.lineCount();
-				const calculatedHeight = lineCount * lineHeight + 30; // パディング用に30px追加
-				const finalHeight = Math.min(calculatedHeight, 600); // 最大600px
+				// CodeMirrorの実際のコンテンツ高さを取得
+				const scrollerElement = codeEditor.getScrollerElement();
+				const contentHeight = scrollerElement.scrollHeight;
+				// パディング用に30px追加、最大600px
+				const finalHeight = Math.min(contentHeight + 30, 600);
 				codeEditor.setSize("100%", finalHeight);
 			}, 100);
 			
@@ -95,6 +105,7 @@ function createMessageElement(role, text) {
 function appendUserMessage(message) {
 	const entry = createMessageElement("You", message);
 	chatBox.appendChild(entry);
+	adjustChatBoxHeight();
 	chatBox.scrollTop = chatBox.scrollHeight;
 	// 会話履歴に追加
 	conversationHistory.push({ role: "user", content: message });
@@ -104,6 +115,7 @@ function appendSystemMessage(message) {
 	const entry = createMessageElement("System", message);
 	entry.classList.add("text-secondary");
 	chatBox.appendChild(entry);
+	adjustChatBoxHeight();
 	chatBox.scrollTop = chatBox.scrollHeight;
 }
 
@@ -152,7 +164,11 @@ function appendAIMessage(reply) {
 		actions.appendChild(applyButton);
 		entry.appendChild(actions);
 	}
-	chatBox.scrollTop = chatBox.scrollHeight;
+	// CodeMirrorの初期化後に高さを調整（少し遅延させて確実に）
+	setTimeout(() => {
+		adjustChatBoxHeight();
+		chatBox.scrollTop = chatBox.scrollHeight;
+	}, 150);
 }
 
 function extractFirstCodeBlock(text) {
@@ -226,6 +242,109 @@ function buildAttackContext(message) {
 		return "";
 	}
 
+	// パラメータドキュメントを生成
+	const parameterDoc = `// ============================================
+// 使用可能なパラメータ一覧
+// ============================================
+//
+// 【共通で使用可能な変数】
+//
+// - step: 現在のステップ数（行動回数）
+//   例: step < 5 で最初の5手を判定
+//
+// - ball: ボールを持っているプレイヤーの番号（0から始まる）
+//   例: ball === select で自分がボールを持っているか判定
+//
+// - select: 現在行動するプレイヤーの番号（0から始まる）
+//   例: select === 0 で1人目のプレイヤーか判定
+//
+// 【移動評価で使用可能なパラメータ】
+//
+// - distance_defense: 守り手までの距離（配列）
+//   各守り手との距離が配列で格納されている
+//
+// - distance_defense_min: 守り手までの最小距離
+//   最も近い守り手との距離。値が大きいほど安全
+//
+// - back_forth_from_goalline: ゴールラインに対する前後の移動距離
+//   前進すると正の値、後退すると負の値、横移動は0
+//   例: 後退を重視する場合、-15 * back_forth_from_goalline など
+//
+// - horizontal_diff_from_ball: ボールを持っているプレイヤーとの横方向の距離（絶対値）
+//   ボールとの横の距離が大きいほど値が大きくなる
+//
+// - vertical_diff_from_ball: ボールを持っているプレイヤーとの縦方向の距離
+//   正の値はボールより前方、負の値はボールより後方
+//
+// - defenseLine: 守り手の左からの順番を表した配列
+//   左から右に向かって守り手のIDが格納されている
+//
+// - attackLine: 攻め手の左からの順番を表した配列
+//   左から右に向かって攻め手のIDが格納されている
+//
+// - deviation_from_uniform_position: 均等に横方向に並ぶ場合の場所からのずれ
+//   均等に並ぶことを重視する場合に使用。値が小さいほど均等に近い
+//
+// 【パス評価で使用可能なパラメータ】
+//
+// - distance_defense_throw_min: ボールを持っているプレイヤーとディフェンスとの最短距離
+//   パスする側が守り手から離れているほど安全。値が大きいほど良い
+//
+// - pass_distance: パスの距離（ユークリッド距離）
+//   パス距離が短いほど成功率が高い。値が小さいほど良い
+//
+// - distance_defense_catch_min: パスを受けるプレイヤーとディフェンスとの最短距離
+//   パスを受ける側が守り手から離れているほど安全。値が大きいほど良い
+//
+// 【コード形式】
+//
+// このコードは簡潔な形式で記述します：
+//
+// 1. 移動評価セクション:
+//    move_score = 評価値;
+//    ※ eval_list.push() は不要（自動的に追加されます）
+//
+// 2. パス評価セクション:
+//    pass_score = 評価値;
+//    ※ eval_list.push() は不要（自動的に追加されます）
+//
+// 3. 評価値が設定されない場合:
+//    自動的に 0.1 * Math.random() が追加されます
+//
+// 【重要：コード記述の原則】
+//
+// - 新しい変数（let, const, var）を定義しないでください
+// - 既存のパラメータ変数（step, ball, select, distance_defense_min など）を直接使用してください
+// - できるだけシンプルで簡潔なコードを記述してください
+// - 複雑なロジックや関数定義は避け、直接的な評価式を記述してください
+//
+// 【使用例】
+//
+// //移動の評価値計算
+// if (step < 5) {
+//   move_score = 
+//     -15 * back_forth_from_goalline +  // 後退を重視（後退は+15、前進は-15）
+//     8 * distance_defense_min;        // 守り手から離れることを重視
+// } else {
+//   move_score = 
+//     -10 * back_forth_from_goalline +  // 後退を重視（後退は+10、前進は-10）
+//     5 * distance_defense_min;        // 守り手から離れることを重視
+// }
+//
+// //パスの評価値計算
+// if (step < 5) {
+//   pass_score = 
+//     10 * distance_defense_throw_min;  // パスする側が守り手から離れていることを重視
+// } else {
+//   pass_score = 
+//     -4 * pass_distance;               // パス距離は短い方が良い
+// }
+//
+// ============================================
+// 以下が現在のユーザーコード
+// ============================================
+`;
+
 	const sections = [];
 
 	if (/移動|move|movement/.test(normalized)) {
@@ -243,10 +362,10 @@ function buildAttackContext(message) {
 	}
 
 	if (!sections.length) {
-		return baseCode.trim();
+		return `${parameterDoc}\n${baseCode.trim()}`;
 	}
 
-	return `${baseCode.trim()}\n\n// --- Focus areas referenced in the user request ---\n${sections.join("\n\n")}`;
+	return `${parameterDoc}\n${baseCode.trim()}\n\n// --- Focus areas referenced in the user request ---\n${sections.join("\n\n")}`;
 }
 
 async function sendChat() {
@@ -299,3 +418,12 @@ inputField.addEventListener("keydown", (event) => {
 		sendChat();
 	}
 });
+
+// ページ読み込み時にチャットボックスの高さを0に初期化
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', () => {
+		adjustChatBoxHeight();
+	});
+} else {
+	adjustChatBoxHeight();
+}
