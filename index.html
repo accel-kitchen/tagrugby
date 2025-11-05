@@ -1,34 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <title>タグラグビーAIソフト（プログラグビー）</title>
-    <meta name="Description" content="" />
-    <meta name="Keywords" content="プログラグビー" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>タグラグビーXプログラミング | プログラグビー</title>
+    <meta
+      name="description"
+      content="タグラグビーの戦術をプログラミングで考える"
+    />
+    <meta name="keywords" content="プログラグビー, タグラグビー, AI, 戦術" />
 
-    <!-- Bootstrap 5 -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
       integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
       crossorigin="anonymous"
     />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
     <link rel="stylesheet" href="assets/css/custom.css" />
+
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
       crossorigin="anonymous"
     ></script>
 
-    <!-- CodeMirror -->
     <link rel="stylesheet" href="assets/codemirror/lib/codemirror.css" />
     <script src="assets/codemirror/lib/codemirror.js"></script>
     <script src="assets/codemirror/mode/javascript/javascript.js"></script>
     <link rel="stylesheet" href="assets/codemirror/addon/dialog/dialog.css" />
-    <link
-      rel="stylesheet"
-      href="assets/codemirror/addon/search/matchesonscrollbar.css"
-    />
+    <link rel="stylesheet" href="assets/codemirror/addon/search/matchesonscrollbar.css" />
     <script src="assets/codemirror/addon/dialog/dialog.js"></script>
     <script src="assets/codemirror/addon/search/searchcursor.js"></script>
     <script src="assets/codemirror/addon/search/search.js"></script>
@@ -36,595 +40,494 @@
     <script src="assets/codemirror/addon/search/matchesonscrollbar.js"></script>
     <script src="assets/codemirror/addon/search/jump-to-line.js"></script>
     <link rel="stylesheet" href="assets/codemirror/theme/eclipse.css" />
-    <!-- TagRugby-core -->
+
     <script type="module" src="assets/js/TagRugby-core-v2.js"></script>
-
-    
   </head>
-
-  <!--icon-->
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
-  />
-  <body>
-    <header>
-      <nav class="navbar navbar-dark bg-dark fixed-top">
-        <a class="navbar-brand" href="#">
-          　<img
-            src="assets/img/rugby-ball.svg"
-            width="24"
-            height="24"
-            class="d-inline-block align-top"
-            alt=""
-          />
-          プログラグビー
+  <body class="app-body">
+    <header class="app-header">
+      <nav class="app-nav container-xxl">
+        <a class="app-brand" href="#">
+          <span class="app-brand__icon">
+            <img src="assets/img/rugby-ball.svg" alt="プログラグビー" width="32" height="32" />
+          </span>
+          <span class="app-brand__label">PROGRUGBY</span>
         </a>
+        <div class="app-nav__actions">
+        </div>
       </nav>
-    </header>
-    <div class="contents">
-
-      <div class="row m-3">
-        <div class="col-md-8">
-          <div class="shadow-sm boardarea bg-white p-3 mr-1">
-            <canvas id="canvas"></canvas>
-
-            <div class="row status">
-              <div class="col-4">
-                <p class="float-end">残りタグ：</p>
+      <section class="app-hero container-xxl">
+        <div class="row align-items-center gy-4">
+          <div class="col-lg-7">
+            <div class="hero-copy">
+              <span class="hero-eyebrow">PROGRAMMING x TAG RUGBY</span>
+              <h1>
+                プログラグビー
+                <span>タグラグビーAIをプログラミングする</span>
+              </h1>
               </div>
-              <div class="col-8" id="tag">0</div>
-              <div class="col-sm-6" id="pass" style="color: #c44a48"></div>
-              <div class="col-sm-6" id="result" style="color: #c44a48"></div>
             </div>
           </div>
         </div>
-        <div class="col-md-4">
-          <div class="shadow-sm bg-white m-3 p-3">
-            <form name="ControlForm">
-                  <label for="attack_role" class="col-form-label">攻め手</label>
-                  <select name="attack_role" class="form-select">
-                    Choose
+      </section>
+    </header>
+
+    <main class="app-main container-xxl" id="studio">
+      <div class="row gy-4 align-items-start">
+        <div class="col-xxl-8 d-flex flex-column gap-4">
+          <section class="glass-panel board-card" aria-labelledby="boardCardTitle">
+            <header class="board-card__header">
+              <div>
+                <span class="eyebrow">Match Canvas</span>
+                <h2 id="boardCardTitle">戦術シミュレーター</h2>
+              </div>
+              <div class="board-card__score">
+                <div class="score-chip">
+                  <span class="score-chip__label">残りタグ</span>
+                  <span class="score-chip__value" id="tag">0</span>
+                </div>
+                <div class="score-chip__messages">
+                  <p id="pass" class="score-message"></p>
+                  <p id="result" class="score-message"></p>
+                </div>
+              </div>
+            </header>
+            <div class="board-card__stage boardarea">
+              <canvas id="canvas"></canvas>
+            </div>
+          </section>
+
+          <section class="glass-panel code-editor" aria-labelledby="attackEditorTitle">
+            <header class="panel-header">
+              <span class="eyebrow">AI Code</span>
+              <div>
+                <h2 id="attackEditorTitle">攻め手AI スクリプト</h2>
+                <p>AttackAIを編集して、攻め手AIをプログラミングしましょう。</p>
+              </div>
+            </header>
+            <form name="CodingForm2" class="editor-form">
+              <div class="editor-form__group">
+                <div class="form-hint" id="codeerror"></div>
+                <textarea class="form-control" name="attackAIfunc" rows="18"></textarea>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <button
+                    type="button"
+                    class="btn btn-primary w-100"
+                    onclick="window.open('https://kaduo.notion.site/Tag-Rugby-3a195932bcf04474be9fabd3972b3cea', '_blank')"
+                  >
+                    <span class="material-symbols-outlined">lightbulb</span>
+                    コードサンプル
+                  </button>
+                </div>
+                <div class="col-md-6">
+                  <button type="button" class="btn btn-primary w-100" onclick="save()">
+                    <span class="material-symbols-outlined">save</span>
+                    AI保存
+                  </button>
+                </div>
+              </div>
+            </form>
+          </section>
+
+          <section class="glass-panel metrics-panel" aria-labelledby="metricsTitle">
+            <header class="panel-header">
+              <span class="eyebrow">Realtime Telemetry</span>
+              <div>
+                <h2 id="metricsTitle">試合パラメータ</h2>
+              </div>
+            </header>
+            <div class="metrics-scroll">
+              <ul class="metrics-list list-group list-group-flush">
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('step')">step</button>
+                  <span class="param-description">行動回数</span>
+                  <span class="badge paramBadge" id="param_step"></span>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('ball')">ball</button>
+                  <span class="param-description">ボールを持っているプレイヤーの番号</span>
+                  <div class="param-item">
+                    <span class="badge paramBadge" id="param_ball_0">0</span>
+                    <span class="badge paramBadge" id="param_ball_1">1</span>
+                    <span class="badge paramBadge" id="param_ball_2">2</span>
+                    <span class="badge paramBadge" id="param_ball_3">3</span>
+                    <span class="badge paramBadge" id="param_ball_4">4</span>
+                  </div>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('select')">select</button>
+                  <span class="param-description">行動待ちのプレイヤーの番号</span>
+                  <div class="param-item">
+                    <span class="badge paramBadge" id="param_select_0">0</span>
+                    <span class="badge paramBadge" id="param_select_1">1</span>
+                    <span class="badge paramBadge" id="param_select_2">2</span>
+                    <span class="badge paramBadge" id="param_select_3">3</span>
+                    <span class="badge paramBadge" id="param_select_4">4</span>
+                  </div>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('tag')">tag</button>
+                  <span class="param-description">残りのタグの数</span>
+                  <div class="param-item">
+                    <span class="badge paramBadge" id="param_tag_1">1</span>
+                    <span class="badge paramBadge" id="param_tag_2">2</span>
+                    <span class="badge paramBadge" id="param_tag_3">3</span>
+                    <span class="badge paramBadge" id="param_tag_4">4</span>
+                    <span class="badge paramBadge" id="param_tag_5">5</span>
+                  </div>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('wait')">wait</button>
+                  <span class="param-description">一回休みになっているか</span>
+                  <div class="param-item">
+                    <span class="badge paramBadge" id="param_wait_1">True(1)</span>
+                    <span class="badge paramBadge" id="param_wait_0">False(-1)</span>
+                  </div>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('tagged')">tagged</button>
+                  <span class="param-description">タグをとられた直後か</span>
+                  <div class="param-item">
+                    <span class="badge paramBadge" id="param_tagged_1">True(1)</span>
+                    <span class="badge paramBadge" id="param_tagged_0">False(-1)</span>
+                  </div>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('turn')">turn</button>
+                  <span class="param-description">攻め手か守り手か</span>
+                  <div class="param-item">
+                    <span class="badge paramBadge" id="param_turn_1">攻(1)</span>
+                    <span class="badge paramBadge" id="param_turn_0">守(-1)</span>
+                  </div>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('distance_defense')">distance_defense</button>
+                  <span class="param-description">守り手までの距離</span>
+                  <div class="param-item">
+                    <span class="badge paramBadge" id="param_distance_0">0</span>
+                    <span class="badge paramBadge" id="param_distance_1">1</span>
+                    <span class="badge paramBadge" id="param_distance_2">2</span>
+                    <span class="badge paramBadge" id="param_distance_3">3</span>
+                    <span class="badge paramBadge" id="param_distance_4">4</span>
+                  </div>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('distance_defense_min')">distance_defense_min</button>
+                  <span class="param-description">最小の守り手までの距離</span>
+                  <span class="badge paramBadge" id="param_distance_defense_min"></span>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('horizontal_diff_from_ball')">horizontal_diff_from_ball</button>
+                  <span class="param-description">ボールとの横の距離</span>
+                  <span class="badge paramBadge" id="param_horizontal_diff_from_ball"></span>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('vertical_diff_from_ball')">vertical_diff_from_ball</button>
+                  <span class="param-description">ボールとの縦の距離</span>
+                  <span class="badge paramBadge" id="param_vertical_diff_from_ball"></span>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('defenseLine')">defenseLine</button>
+                  <span class="param-description">守り手の左からの順番</span>
+                  <div class="param-item">
+                    <span class="badge paramBadge" id="param_defenseLine_0">0</span>
+                    <span class="badge paramBadge" id="param_defenseLine_1">1</span>
+                    <span class="badge paramBadge" id="param_defenseLine_2">2</span>
+                    <span class="badge paramBadge" id="param_defenseLine_3">3</span>
+                    <span class="badge paramBadge" id="param_defenseLine_4">4</span>
+                  </div>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('attackLine')">attackLine</button>
+                  <span class="param-description">攻め手の左からの順番</span>
+                  <div class="param-item">
+                    <span class="badge paramBadge" id="param_attackLine_0">0</span>
+                    <span class="badge paramBadge" id="param_attackLine_1">1</span>
+                    <span class="badge paramBadge" id="param_attackLine_2">2</span>
+                    <span class="badge paramBadge" id="param_attackLine_3">3</span>
+                    <span class="badge paramBadge" id="param_attackLine_4">4</span>
+                  </div>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('deviation_from_uniform_position')">deviation_from_uniform_position</button>
+                  <span class="param-description">均等に並ぶ場所からのずれ</span>
+                  <span class="badge paramBadge" id="param_deviation_from_uniform_position"></span>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('distance_defense_throw_min')">distance_defense_throw_min</button>
+                  <span class="param-description">ボールと守り手の最短距離</span>
+                  <span class="badge paramBadge" id="param_distance_defense_throw_min"></span>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('distance_defense_catch_min')">distance_defense_catch_min</button>
+                  <span class="param-description">守り手との最短距離</span>
+                  <div class="param-item">
+                    <span class="badge paramBadge" id="param_distance_defense_catch_min_0">0</span>
+                    <span class="badge paramBadge" id="param_distance_defense_catch_min_1">1</span>
+                    <span class="badge paramBadge" id="param_distance_defense_catch_min_2">2</span>
+                    <span class="badge paramBadge" id="param_distance_defense_catch_min_3">3</span>
+                    <span class="badge paramBadge" id="param_distance_defense_catch_min_4">4</span>
+                  </div>
+                </li>
+                <li class="list-group-item metrics-item">
+                  <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('pass_distance')">pass_distance</button>
+                  <span class="param-description">パスの距離</span>
+                  <div class="param-item">
+                    <span class="badge paramBadge" id="param_pass_distance_0">0</span>
+                    <span class="badge paramBadge" id="param_pass_distance_1">1</span>
+                    <span class="badge paramBadge" id="param_pass_distance_2">2</span>
+                    <span class="badge paramBadge" id="param_pass_distance_3">3</span>
+                    <span class="badge paramBadge" id="param_pass_distance_4">4</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="glass-panel code-editor" aria-labelledby="positionEditorTitle">
+            <header class="panel-header">
+              <span class="eyebrow">Scenario Layout</span>
+              <div>
+                <h2 id="positionEditorTitle">初期配置コード</h2>
+              </div>
+            </header>
+            <form name="CodingForm" class="editor-form">
+              <div class="editor-form__group">
+                <div class="form-hint" id="poserror"></div>
+                <textarea class="form-control" name="initial_pos" rows="10"></textarea>
+              </div>
+            </form>
+          </section>
+        </div>
+
+        <div class="col-xxl-4 d-flex flex-column gap-4">
+          <section class="glass-panel control-panel" aria-labelledby="controlPanelTitle">
+            <header class="panel-header">
+              <span class="eyebrow">Match Control</span>
+              <div>
+                <h2 id="controlPanelTitle">ゲーム設定</h2>
+              </div>
+            </header>
+            <form name="ControlForm" class="control-form">
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="attack_role">攻め手</label>
+                  <select name="attack_role" id="attack_role" class="form-select">
                     <option value="human">人</option>
                     <option value="AttackAI">AI</option>
                   </select>
-                  <label for="defense_role" class="col-form-label">守り手</label>
-                  <select name="defense_role" class="form-select">
-                    Choose
-                    <option value="human">人</option>
+                </div>
+                <div class="form-field">
+                  <label for="defense_role">守り手</label>
+                  <select name="defense_role" id="defense_role" class="form-select">
+                    <option value="human">人間</option>
                     <option value="DefenseSample1">AI1</option>
                     <option value="DefenseSample2">AI2</option>
                   </select>
-                  <label for="game_speed" class="col-form-label">速さ</label>
-                  <select name="game_speed" class="form-select">
-                    Choose
+                </div>
+                <div class="form-field">
+                  <label for="game_speed">試合スピード</label>
+                  <select name="game_speed" id="game_speed" class="form-select">
                     <option value="0">低速</option>
                     <option value="1">高速</option>
                     <option value="2">超高速</option>
                   </select>
-                <div class="pt-3 d-flex align-items-end">
-                  <button
-                    type="button"
-                    class="btn btn-primary w-100 shadow"
-                    onclick="restart()"
-                  >
-                    <span class="material-symbols-outlined"> settings </span>
-                    攻め手、守り手を設定
-                  </button>
-                </div>
-                <div class="pt-3 d-flex align-items-end">
-                  <button
-                    type="button"
-                    class="btn btn-primary w-100 shadow"
-                    onclick="config()"
-                  >
-                    <span class="material-symbols-outlined"> restart_alt </span
-                    >盤面を初期化
-                  </button>
-                </div>
-                <div class="pt-3 d-flex align-items-end">
-                  <input type="hidden" name="ana_role" value="AttackAI" />
-                  <button
-                    type="button"
-                    class="btn btn-primary w-100 shadow"
-                    onclick="analysis()"
-                  >
-                    <span class="material-symbols-outlined"> search </span>
-                    解析（評価値表示）
-                  </button>
-                </div>
-            </form>
-            <div class="shadow p-3 mt-3 rounded">
-              <label for="win_lose" class="">勝敗数</label>
-              <div class="progress">
-                <div
-                  id="attack_win_num"
-                  class="progress-bar bg-progress-attack"
-                  role="progressbar"
-                  style="width: 50%"
-                  aria-valuenow="0"
-                  aria-valuemin="0"
-                  aria-valuemax="100"
-                >
-                  攻め手　0 回
-                </div>
-                <div
-                  id="defense_win_num"
-                  class="progress-bar bg-progress-defense"
-                  role="progressbar"
-                  style="width: 50%"
-                  aria-valuenow="0"
-                  aria-valuemin="0"
-                  aria-valuemax="100"
-                >
-                  守り手　0 回
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
+              <div class="control-actions">
+                <button type="button" class="btn btn-primary w-100" onclick="restart()">
+                  <span class="material-symbols-outlined">play_arrow</span>
+                  攻守を更新
+                </button>
+                <button type="button" class="btn btn-secondary w-100" onclick="config()">
+                  <span class="material-symbols-outlined">restart_alt</span>
+                  盤面リセット
+                </button>
+                <input type="hidden" name="ana_role" value="AttackAI" />
+                <button type="button" class="btn btn-outline-light w-100" onclick="analysis()">
+                  <span class="material-symbols-outlined">monitoring</span>
+                  解析（評価値表示）
+                </button>
+              </div>
+            </form>
+          </section>
 
-      <div class="row m-3">
-        <div class="col-md-7">
-    <div class="codingarea shadow-sm bg-white p-3 m-3">
-      <form name="CodingForm2">
-        <div class="coding-form">
-          <label for="attackAIfunc">攻め手AIのコード</label>
-          <div class="param" id="codeerror" style="color: #c44a48"></div>
-          <textarea
-            class="form-control"
-            name="attackAIfunc"
-            rows="20"
-          ></textarea>
-        </div>
-        <div class="row">
-          <button
-            type="button"
-            class="btn btn-primary mt-3 col-6"
-            onclick="window.open('https://kaduo.notion.site/Tag-Rugby-3a195932bcf04474be9fabd3972b3cea', '_blank')"
-          >
-            <span class="material-symbols-outlined"> priority_high </span>
-            コードサンプル
-          </button>
+          <section class="glass-panel progress-card" aria-labelledby="progressTitle">
+            <header class="panel-header">
+              <span class="eyebrow">Scoreboard</span>
+              <h2 id="progressTitle">勝敗メーター</h2>
+            </header>
+            <div class="progress scoreboard-progress">
+              <div
+                id="attack_win_num"
+                class="progress-bar bg-progress-attack"
+                role="progressbar"
+                style="width: 50%"
+                aria-valuenow="0"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                攻め手　0 回
+              </div>
+              <div
+                id="defense_win_num"
+                class="progress-bar bg-progress-defense"
+                role="progressbar"
+                style="width: 50%"
+                aria-valuenow="0"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                守り手　0 回
+              </div>
+            </div>
+          </section>
 
-          <button
-            type="button"
-            class="btn btn-primary mt-3 col-6"
-            onclick="save()"
-          >
-            <span class="material-symbols-outlined"> save </span> AI保存
-          </button>
-        </div>
-      </form>
-    </div>
-    <div class="codingarea shadow-sm bg-white p-3 m-3">
-      <form name="CodingForm">
-        <div class="form-group-sm">
-          <label for="initial_pos">初期配置の設定のコード</label>
-          <div class="param" id="poserror" style="color: #c44a48"></div>
-          <textarea class="form-control" name="initial_pos" rows="8"></textarea>
-        </div>
-      </form>
-    </div>
-    </div>
-    <div class="col-md-5">
-      <div class="codingarea shadow-sm">
-        <ul class="list-group">
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-            <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('step')">step</button><span class="param-description">行動回数</span>
-            <span class="badge paramBadge" id="param_step"></span>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-          <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('ball')">ball</button><span class="param-description"
-              >ボールを持っているプレイヤーの番号</span
-            >
-            <div class="param-item">
-              <span class="badge paramBadge" id="param_ball_0">0</span>
-              <span class="badge paramBadge" id="param_ball_1">1</span>
-              <span class="badge paramBadge" id="param_ball_2">2</span>
-              <span class="badge paramBadge" id="param_ball_3">3</span>
-              <span class="badge paramBadge" id="param_ball_4">4</span>
-            </div>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-          <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('select')">select</button><span class="param-description"
-              >行動待ちのプレイヤーの番号</span
-            >
-            <div class="param-item">
-              <span class="badge paramBadge" id="param_select_0">0</span>
-              <span class="badge paramBadge" id="param_select_1">1</span>
-              <span class="badge paramBadge" id="param_select_2">2</span>
-              <span class="badge paramBadge" id="param_select_3">3</span>
-              <span class="badge paramBadge" id="param_select_4">4</span>
-            </div>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-          <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('tag')">tag</button><span class="param-description">残りのタグの数</span>
-            <div class="param-item">
-              <span class="badge paramBadge" id="param_tag_1">1</span>
-              <span class="badge paramBadge" id="param_tag_2">2</span>
-              <span class="badge paramBadge" id="param_tag_3">3</span>
-              <span class="badge paramBadge" id="param_tag_4">4</span>
-              <span class="badge paramBadge" id="param_tag_5">5</span>
-            </div>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-            <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('wait')">wait</button><span class="param-description"
-              >一回休みになっているか</span
-            >
-            <div class="param-item">
-              <span class="badge paramBadge" id="param_wait_1"
-                >True(1)</span
-              >
-              <span class="badge paramBadge" id="param_wait_0"
-                >False(-1)</span
-              >
-            </div>
-          </li>
-
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-          <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('tagged')">tagged</button><span class="param-description"
-              >タグをとられた直後か</span
-            >
-            <div class="param-item">
-              <span class="badge paramBadge" id="param_tagged_1"
-                >True(1)</span
-              >
-              <span class="badge paramBadge" id="param_tagged_0"
-                >False(-1)</span
-              >
-            </div>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-          <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('turn')">turn</button><span class="param-description">攻め手か守り手か</span>
-            <div class="param-item">
-              <span class="badge paramBadge" id="param_turn_1">攻(1)</span>
-              <span class="badge paramBadge" id="param_turn_0">守(-1)</span>
-            </div>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-            <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('distance_defense')">distance_defense</button><span class="param-description"
-              >守り手までの距離</span
-            >
-            <div class="param-item">
-              <span class="badge paramBadge" id="param_distance_0">0</span>
-              <span class="badge paramBadge" id="param_distance_1">1</span>
-              <span class="badge paramBadge" id="param_distance_2">2</span>
-              <span class="badge paramBadge" id="param_distance_3">3</span>
-              <span class="badge paramBadge" id="param_distance_4">4</span>
-            </div>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-            <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('distance_defense_min')">distance_defense_min</button><span class="param-description"
-              >最小の守り手までの距離</span
-            >
-            <span
-              class="badge paramBadge"
-              id="param_distance_defense_min"
-            ></span>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-            <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('horizontal_diff_from_ball')">horizontal_diff_from_ball</button><span class="param-description"
-              >ボールとの横の距離</span
-            >
-            <span
-              class="badge paramBadge"
-              id="param_horizontal_diff_from_ball"
-            ></span>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-            <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('vertical_diff_from_ball')">vertical_diff_from_ball</button><span class="param-description"
-              >ボールとの縦の距離</span
-            >
-            <span
-              class="badge paramBadge"
-              id="param_vertical_diff_from_ball"
-            ></span>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-            <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('defenseLine')">defenseLine</button><span class="param-description"
-              >守り手の左からの順番</span
-            >
-            <div class="param-item">
-              <span class="badge paramBadge" id="param_defenseLine_0"
-                >0</span
-              >
-              <span class="badge paramBadge" id="param_defenseLine_1"
-                >1</span
-              >
-              <span class="badge paramBadge" id="param_defenseLine_2"
-                >2</span
-              >
-              <span class="badge paramBadge" id="param_defenseLine_3"
-                >3</span
-              >
-              <span class="badge paramBadge" id="param_defenseLine_4"
-                >4</span
-              >
-            </div>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-            <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('attackLine')">attackLine</button><span class="param-description"
-              >攻め手の左からの順番</span
-            >
-            <div class="param-item">
-              <span class="badge paramBadge" id="param_attackLine_0"
-                >0</span
-              >
-              <span class="badge paramBadge" id="param_attackLine_1"
-                >1</span
-              >
-              <span class="badge paramBadge" id="param_attackLine_2"
-                >2</span
-              >
-              <span class="badge paramBadge" id="param_attackLine_3"
-                >3</span
-              >
-              <span class="badge paramBadge" id="param_attackLine_4"
-                >4</span
-              >
-            </div>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-            <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('deviation_from_uniform_position')">deviation_from_uniform_position</button><span class="param-description"
-              >均等に並ぶ場所からのずれ</span
-            >
-            <span
-              class="badge paramBadge"
-              id="param_deviation_from_uniform_position"
-            ></span>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-            <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('distance_defense_throw_min')">distance_defense_throw_min</button><span class="param-description"
-              >ボールと守り手の最短距離</span
-            >
-            <span
-              class="badge paramBadge"
-              id="param_distance_defense_throw_min"
-            ></span>
-          </li>
-
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-            <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('distance_defense_catch_min')">distance_defense_catch_min</button><span class="param-description"
-              >守り手との最短距離</span
-            >
-
-            <div class="param-item">
-              <span
-                class="badge paramBadge"
-                id="param_distance_defense_catch_min_0"
-                >0</span
-              >
-              <span
-                class="badge paramBadge"
-                id="param_distance_defense_catch_min_1"
-                >1</span
-              >
-              <span
-                class="badge paramBadge"
-                id="param_distance_defense_catch_min_2"
-                >2</span
-              >
-              <span
-                class="badge paramBadge"
-                id="param_distance_defense_catch_min_3"
-                >3</span
-              >
-              <span
-                class="badge paramBadge"
-                id="param_distance_defense_catch_min_4"
-                >4</span
-              >
-            </div>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center param-list"
-          >
-            <button type="button" class="btn btn-outline-dark btn-sm" onclick="navigator.clipboard.writeText('pass_distance')">pass_distance</button><span class="param-description">パスの距離</span>
-
-            <div class="param-item">
-              <span class="badge paramBadge" id="param_pass_distance_0"
-                >0</span
-              >
-              <span class="badge paramBadge" id="param_pass_distance_1"
-                >1</span
-              >
-              <span class="badge paramBadge" id="param_pass_distance_2"
-                >2</span
-              >
-              <span class="badge paramBadge" id="param_pass_distance_3"
-                >3</span
-              >
-              <span class="badge paramBadge" id="param_pass_distance_4"
-                >4</span
-              >
-            </div>
-          </li>
-        </ul>
-      </div>
-
-    </div>
-  </div>
-    <div class="config shadow-sm m-3 bg-white p-3">
-      <div class="codingarea shadow-sm bg-white p-3 m-3">
-        <label for="gpt" class="col-form-label">AIに相談する</label>
-
-        <div id="chat-box"></div>
-        <div id="loadingIndicator" style="display: none;">読み込み中...</div>
-            <textarea id="input-field" class="w-100" rows="5">
-            </textarea>
-
-            <button
-            type="button"
-            class="btn btn-primary w-100 shadow"
-            onclick="sendChat()"
-          >
-          <span class="material-symbols-outlined">
-            mic
-            </span>
-            話しかける
-          </button>
-     </div>
-
-      </div>
-      <form name="ConfigForm">
-        <div class="row">
-          <div class="col-sm-2">
-            <label for="boardsize" class="col-form-label">盤面サイズ</label>
-            <select name="boardsize" class="form-select">
-              Choose
-              <option value="8">8×8</option>
-              <option value="12">12×12</option>
-              <option value="16">16×16</option>
-              <option value="20" selected="selected">20×20</option>
-            </select>
-          </div>
-          <div class="col-sm-2">
-            <label for="tag_num" class="col-form-label">タグの回数</label>
-            <select name="tag_num" class="form-select">
-              Choose
-              <option value="1">1回</option>
-              <option value="2">2回</option>
-              <option value="3">3回</option>
-              <option value="4" selected="selected">4回</option>
-              <option value="5">5回</option>
-            </select>
-          </div>
-          <div class="col-sm-3">
-            <label for="attackNum" class="col-form-label">攻め手</label>
-            <select name="attackNum" class="form-select">
-              Choose
-              <option value="1">1人</option>
-              <option value="2">2人</option>
-              <option value="3">3人</option>
-              <option value="4">4人</option>
-              <option value="5" selected="selected">5人</option>
-            </select>
-          </div>
-          <div class="col-sm-3">
-            <label for="defenseNum" class="col-form-label">守り手</label>
-            <select name="defenseNum" class="form-select">
-              Choose
-              <option value="1">1人</option>
-              <option value="2">2人</option>
-              <option value="3">3人</option>
-              <option value="4">4人</option>
-              <option value="5" selected="selected">5人</option>
-            </select>
-          </div>
-
-          <div class="col-sm-2 config-submit d-flex align-items-end">
-            <button
-              type="button"
-              class="btn btn-primary w-100"
-              onclick="config()"
-            >
-              <span class="material-symbols-outlined"> settings </span> 設定
+          <section class="glass-panel chat-panel" aria-labelledby="chatPanelTitle">
+            <header class="panel-header">
+              <span class="eyebrow">AI Conversation</span>
+              <h2 id="chatPanelTitle">AIに相談する</h2>
+            </header>
+            <div id="chat-box"></div>
+            <div id="loadingIndicator" class="chat-loading" style="display: none;">読み込み中...</div>
+            <textarea
+              id="input-field"
+              class="form-control"
+              rows="5"
+              placeholder="戦術の疑問や分析のリクエストを入力"
+            ></textarea>
+            <button type="button" class="btn btn-primary w-100" onclick="sendChat()">
+              <span class="material-symbols-outlined">mic</span>
+              話しかける
             </button>
-          </div>
-        </div>
-      </form>
-    </div>
+          </section>
 
-    <div class="config shadow-sm p-3 m-3 bg-white">
-      <form name="SampleForm">
-        <div class="row">
-          <div class="col-sm-8">
-            <label for="samplenum" class="col-form-label">サンプル</label>
-            <select name="samplenum" class="form-control">
-              Choose
-              <option value="1">1対1 (1)</option>
-              <option value="2">1対1 (2)</option>
-              <option value="3">1対1 (3)</option>
-              <option value="4">2対2 (1)</option>
-              <option value="5">2対2 (2)</option>
-              <option value="6">2対2 (3)</option>
-            </select>
-          </div>
-          <div class="col-sm-4 d-flex align-items-end">
-            <button
-              type="button"
-              class="btn btn-primary w-100"
-              onclick="sampleset()"
-            >
-              <span class="material-symbols-outlined"> file_download </span>
-              読み込み
-            </button>
-          </div>
+          <section class="glass-panel config-panel" aria-labelledby="configTitle">
+            <header class="panel-header">
+              <span class="eyebrow">Environment</span>
+              <h2 id="configTitle">盤面コンフィグ</h2>
+            </header>
+            <form name="ConfigForm" class="control-form">
+              <div class="form-grid form-grid--compact">
+                <div class="form-field">
+                  <label for="boardsize">盤面サイズ</label>
+                  <select name="boardsize" id="boardsize" class="form-select">
+                    <option value="8">8×8</option>
+                    <option value="12">12×12</option>
+                    <option value="16">16×16</option>
+                    <option value="20" selected="selected">20×20</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="tag_num">タグの回数</label>
+                  <select name="tag_num" id="tag_num" class="form-select">
+                    <option value="1">1回</option>
+                    <option value="2">2回</option>
+                    <option value="3">3回</option>
+                    <option value="4" selected="selected">4回</option>
+                    <option value="5">5回</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="attackNum">攻め手人数</label>
+                  <select name="attackNum" id="attackNum" class="form-select">
+                    <option value="1">1人</option>
+                    <option value="2">2人</option>
+                    <option value="3">3人</option>
+                    <option value="4">4人</option>
+                    <option value="5" selected="selected">5人</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="defenseNum">守り手人数</label>
+                  <select name="defenseNum" id="defenseNum" class="form-select">
+                    <option value="1">1人</option>
+                    <option value="2">2人</option>
+                    <option value="3">3人</option>
+                    <option value="4">4人</option>
+                    <option value="5" selected="selected">5人</option>
+                  </select>
+                </div>
+              </div>
+              <div class="control-actions mt-3">
+                <button type="button" class="btn btn-outline-light w-100" onclick="config()">
+                  <span class="material-symbols-outlined">settings</span>
+                  設定を反映
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section class="glass-panel sample-panel" aria-labelledby="sampleTitle">
+            <header class="panel-header">
+              <span class="eyebrow">Scenario Presets</span>
+              <h2 id="sampleTitle">サンプル読み込み</h2>
+            </header>
+            <form name="SampleForm" class="control-form">
+              <div class="form-grid form-grid--compact">
+                <div class="form-field form-field--wide">
+                  <label for="samplenum">サンプル</label>
+                  <select name="samplenum" id="samplenum" class="form-select">
+                    <option value="1">1対1 (1)</option>
+                    <option value="2">1対1 (2)</option>
+                    <option value="3">1対1 (3)</option>
+                    <option value="4">2対2 (1)</option>
+                    <option value="5">2対2 (2)</option>
+                    <option value="6">2対2 (3)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="control-actions mt-3">
+                <button type="button" class="btn btn-primary w-100" onclick="sampleset()">
+                  <span class="material-symbols-outlined">file_download</span>
+                  読み込み
+                </button>
+              </div>
+            </form>
+          </section>
         </div>
-      </form>
-    </div>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <div class="container-xxl d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <span>プログラグビー </span>
+      </div>
+    </footer>
+
+    <script type="text/javascript">
+      let editor = CodeMirror.fromTextArea(document.CodingForm2.attackAIfunc, {
+        lineNumbers: true,
+        mode: "javascript",
+        theme: "eclipse",
+      });
+      editor.setValue(loadAI());
+      window.attackEditor = editor;
+      window.editor = editor;
+
+      let pos_editor = CodeMirror.fromTextArea(document.CodingForm.initial_pos, {
+        lineNumbers: true,
+        mode: "javascript",
+        theme: "eclipse",
+      });
+      pos_editor.setValue(loadpos());
+      window.pos_editor = pos_editor;
+
+      function loadpos() {
+        let xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", "assets/js/initial_pos.js", false);
+        xmlHttp.send(null);
+        return xmlHttp.responseText;
+      }
+
+      function loadAI() {
+        let xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", "assets/js/attackAI.js", false);
+        xmlHttp.send(null);
+        return xmlHttp.responseText;
+      }
+    </script>
+    <script src="assets/js/gpt.js"></script>
   </body>
-  <script type="text/javascript">
-    //----------------------------------------
-    // CodeMirrorの設定
-    //----------------------------------------
-
-    let editor = CodeMirror.fromTextArea(document.CodingForm2.attackAIfunc, {
-      lineNumbers: true,
-      mode: "javascript",
-      theme: "eclipse" /* テーマの設定 */,
-    });
-    editor.setValue(loadAI());
-    window.attackEditor = editor;
-    window.editor = editor; // ES6モジュールとの互換性のため
-    let pos_editor = CodeMirror.fromTextArea(document.CodingForm.initial_pos, {
-      lineNumbers: true,
-      mode: "javascript",
-      theme: "eclipse" /* テーマの設定 */,
-    });
-    pos_editor.setValue(loadpos());
-    window.pos_editor = pos_editor; // ES6モジュールとの互換性のため
-    //----------------------------------------
-    // 初期配置の読み込み
-    //----------------------------------------
-    function loadpos() {
-      let xmlHttp = new XMLHttpRequest();
-      xmlHttp.open("GET", "assets/js/initial_pos.js", false);
-      xmlHttp.send(null);
-      return xmlHttp.responseText;
-    }
-    //----------------------------------------
-    // AIファイルの読み込み
-    //----------------------------------------
-    function loadAI() {
-      let xmlHttp = new XMLHttpRequest();
-      xmlHttp.open("GET", "assets/js/attackAI.js", false);
-      xmlHttp.send(null);
-      return xmlHttp.responseText;
-    }
-  </script>
-  <script src="assets/js/gpt.js"></script>
 </html>

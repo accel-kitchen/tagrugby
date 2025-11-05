@@ -34,7 +34,7 @@ export const MAX_PASS_LENGTH = GameRules.CATCH_PROBABILITY_LIST.length - 1; // �
 
 // タイミング設定
 export const TimingConfig = {
-	DELAYDURATION: 1500, // 打ってから反映するまでの時間
+	DELAYDURATION: 750, // 打ってから反映するまでの時間（2倍速）
 	ENDDURATION: 1000, // AI同士でゲーム終了してから次のゲーム開始までの時間
 };
 
@@ -49,22 +49,22 @@ export const boardWordVer = new Array(
 	"10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"
 );
 
-// 色設定
+// 色設定 - ビビッドなスポーツ調
 export const Colors = {
-	BOARDCOLOR: "#f4f8ff",
+	BOARDCOLOR: "#E8F4F8",
 	ATTACKFILLCOLOR: "#3FB6EA",
-	ATTACKBORDERCOLOR: "#000000",
+	ATTACKBORDERCOLOR: "#1A8FC8",
 	DEFENSEFILLCOLOR: "#D11036",
-	DEFENSEBORDERCOLOR: "#000000",
-	BOARDERCOLOR: "#3f3f3f",
-	BACKGROUNDCOLOR: "#ffffff",
-	FONTCOLOR: "#3f3f3f",
-	ANAMOVEFONTCOLOR: "#3f3f3f",
-	ANAPASSFONTCOLOR: "#ffffff",
-	INGOALCOLOR: "#F27575",
-	BALLCOLOR: "#c65353",
-	SELECTDISC: "#3f3f3f",
-	FINALDISC: "#c65353",
+	DEFENSEBORDERCOLOR: "#A00D2A",
+	BOARDERCOLOR: "#2C3E50",
+	BACKGROUNDCOLOR: "#FFFFFF",
+	FONTCOLOR: "#1A1A2E",
+	ANAMOVEFONTCOLOR: "#1A1A2E",
+	ANAPASSFONTCOLOR: "#FFFFFF",
+	INGOALCOLOR: "#FF6B35",
+	BALLCOLOR: "#FFD23F",
+	SELECTDISC: "#FF6B35",
+	FINALDISC: "#FFD23F",
 };
 
 // タグ画像

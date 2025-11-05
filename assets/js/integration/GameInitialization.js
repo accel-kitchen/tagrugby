@@ -116,6 +116,8 @@ function init() {
 	gameEndFlag = 0;
 	game = new GameController(Role[0], Role[1]);
 	renderer = new CanvasRenderer(canvas, ctx, game, appState);
+	appState.setRenderer(renderer);
+	window.renderer = renderer; // グローバル変数として直接設定
 
 	tag = "";
 	for (let i = 0; i < window.MAXTAG; i++) {
@@ -194,8 +196,8 @@ function rematch() {
 function config() {
 	try {
 		window.BOARDSIZE = parseInt(document.ConfigForm.boardsize.value);
-		const attack_num = parseInt(document.ConfigForm.attackNum.value);
-		const defense_num = parseInt(document.ConfigForm.defenseNum.value);
+		window.attack_num = parseInt(document.ConfigForm.attackNum.value);
+		window.defense_num = parseInt(document.ConfigForm.defenseNum.value);
 		window.MAXTAG = parseInt(document.ConfigForm.tag_num.value);
 		if (typeof pos_editor !== 'undefined') {
 			eval(pos_editor.getValue());
@@ -204,8 +206,8 @@ function config() {
 		document.getElementById("poserror").innerHTML = "初期位置の書き方が正しくありません。" + err;
 	}
 	window.CATCH_PROBABILITY_LIST = [1, 1, 1, 1, 1, 0.8, 0.8, 0.6, 0.6, 0.4, 0.4];
-	window.POSATTACK = window.POSATTACK.slice(0, attack_num);
-	window.POSDEFENSE = window.POSDEFENSE.slice(0, defense_num);
+	window.POSATTACK = window.POSATTACK.slice(0, window.attack_num);
+	window.POSDEFENSE = window.POSDEFENSE.slice(0, window.defense_num);
 	rematchInit();
 }
 
@@ -230,12 +232,24 @@ function restart() {
 	if (game_speed == 0) {
 		window.DELAYDURATION = 1500;
 		window.ENDDURATION = 1000;
+		// アニメーション速度を通常に設定
+		if (renderer && renderer.animationManager) {
+			renderer.animationManager.setSpeed(1.0);
+		}
 	} else if (game_speed == 1) {
 		window.DELAYDURATION = 100;
 		window.ENDDURATION = 1000;
+		// アニメーション速度を高速に設定（0.5倍速）
+		if (renderer && renderer.animationManager) {
+			renderer.animationManager.setSpeed(0.5);
+		}
 	} else {
 		window.DELAYDURATION = 0;
 		window.ENDDURATION = 1000;
+		// アニメーション速度を超高速に設定（0 = アニメーションなし）
+		if (renderer && renderer.animationManager) {
+			renderer.animationManager.setSpeed(0);
+		}
 	}
 
 	if (Role[arrayTurn(game.turn)] != "human" && restartFlag == 0) {
@@ -392,6 +406,7 @@ if (typeof window !== 'undefined') {
 	window.mouseY = mouseY;
 	window.mouseBlockX = mouseBlockX;
 	window.mouseBlockY = mouseBlockY;
+	window.renderer = renderer; // rendererも公開
 }
 
 // window.onload時に初期化

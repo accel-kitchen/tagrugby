@@ -243,6 +243,17 @@ function init() {
 
 	appState.setCanvas(canvas, ctx);
 
+	gameEndFlag = 0;
+	game = new GameController(Role[0], Role[1]);
+	renderer = new CanvasRenderer(canvas, ctx, game, appState);
+	appState.setRenderer(renderer);
+	
+	// グローバル変数として直接設定
+	if (window.hasOwnProperty('renderer') || Object.getOwnPropertyDescriptor(window, 'renderer')) {
+		delete window.renderer;
+	}
+	window.renderer = renderer;
+
 	canvas.onmousemove = moveMouse;
 	canvas.onclick = function () {
 		if (AIthinkFlag == 0) {
@@ -253,10 +264,6 @@ function init() {
 			}, gameOver, appState);
 		}
 	};
-
-	gameEndFlag = 0;
-	game = new GameController(Role[0], Role[1]);
-	renderer = new CanvasRenderer(canvas, ctx, game, appState);
 
 	tag = "";
 	for (let i = 0; i < window.MAXTAG; i++) {
@@ -335,8 +342,8 @@ function rematch() {
 function config() {
 	try {
 		window.BOARDSIZE = parseInt(document.ConfigForm.boardsize.value);
-		const attack_num = parseInt(document.ConfigForm.attackNum.value);
-		const defense_num = parseInt(document.ConfigForm.defenseNum.value);
+		window.attack_num = parseInt(document.ConfigForm.attackNum.value);
+		window.defense_num = parseInt(document.ConfigForm.defenseNum.value);
 		window.MAXTAG = parseInt(document.ConfigForm.tag_num.value);
 		if (typeof pos_editor !== 'undefined') {
 			// 既存コードとの互換性のため、eval()を使用
@@ -353,8 +360,8 @@ function config() {
 		return;
 	}
 	window.CATCH_PROBABILITY_LIST = [1, 1, 1, 1, 1, 0.8, 0.8, 0.6, 0.6, 0.4, 0.4];
-	window.POSATTACK = window.POSATTACK.slice(0, attack_num);
-	window.POSDEFENSE = window.POSDEFENSE.slice(0, defense_num);
+	window.POSATTACK = window.POSATTACK.slice(0, window.attack_num);
+	window.POSDEFENSE = window.POSDEFENSE.slice(0, window.defense_num);
 	rematchInit();
 }
 
@@ -379,12 +386,24 @@ function restart() {
 	if (game_speed == 0) {
 		window.DELAYDURATION = 1500;
 		window.ENDDURATION = 1000;
+		// アニメーション速度を通常に設定
+		if (renderer && renderer.animationManager) {
+			renderer.animationManager.setSpeed(1.0);
+		}
 	} else if (game_speed == 1) {
 		window.DELAYDURATION = 100;
 		window.ENDDURATION = 1000;
+		// アニメーション速度を高速に設定（0.5倍速）
+		if (renderer && renderer.animationManager) {
+			renderer.animationManager.setSpeed(0.5);
+		}
 	} else {
 		window.DELAYDURATION = 0;
 		window.ENDDURATION = 1000;
+		// アニメーション速度を超高速に設定（0 = アニメーションなし）
+		if (renderer && renderer.animationManager) {
+			renderer.animationManager.setSpeed(0);
+		}
 	}
 
 	if (Role[arrayTurn(game.turn)] != "human" && restartFlag == 0) {
@@ -594,11 +613,23 @@ if (typeof window !== 'undefined') {
 		enumerable: true,
 		configurable: true
 	});
+	
+	// renderer変数はinit()内で直接設定される（Object.definePropertyは使用しない）
 }
 
 // window.onload時に初期化
-window.onload = function () {
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', function() {
+		init();
+	});
+} else {
 	init();
+}
+
+window.onload = function() {
+	if (!window.renderer) {
+		init();
+	}
 };
 
 // エクスポート

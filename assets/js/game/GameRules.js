@@ -17,13 +17,19 @@ import { GameRules } from '../config/GameConfig.js';
  * @param {number} wait - 現在の待機プレイヤー番号
  * @returns {number} 待機プレイヤー番号（失敗時は受け手、成功時は-1）
  */
-export function tryCatch(ball, catcher, x1, y1, x2, y2, wait) {
+export function tryCatch(ball, catcher, x1, y1, x2, y2, wait, animationManager = null) {
 	if (probJudge(catchProb(x1, y1, x2, y2, GameRules.CATCH_PROBABILITY_LIST))) {
-		document.getElementById("pass").innerHTML = "パス成功！";
+		// フィードバックエフェクトを表示（受け手の位置に）
+		if (animationManager) {
+			animationManager.startFeedbackEffect(x2, y2, "パス成功！", "#00FF00", 2000);
+		}
 		return -1;
 	} else {
 		wait = catcher;
-		document.getElementById("pass").innerHTML = "パス失敗！";
+		// フィードバックエフェクトを表示（受け手の位置に）
+		if (animationManager) {
+			animationManager.startFeedbackEffect(x2, y2, "パス失敗！", "#FF0000", 2000);
+		}
 		return wait;
 	}
 }

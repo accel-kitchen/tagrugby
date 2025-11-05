@@ -34,6 +34,7 @@ export class AppState {
 		// DOM参照（初期化時に設定）
 		this.canvas = null;
 		this.ctx = null;
+		this.renderer = null;
 	}
 
 	/**
@@ -44,6 +45,14 @@ export class AppState {
 	setCanvas(canvas, ctx) {
 		this.canvas = canvas;
 		this.ctx = ctx;
+	}
+
+	/**
+	 * レンダラーを設定
+	 * @param {Object} renderer - レンダラーインスタンス
+	 */
+	setRenderer(renderer) {
+		this.renderer = renderer;
 	}
 }
 

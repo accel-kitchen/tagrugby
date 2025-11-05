@@ -13,15 +13,40 @@ import { BoardConfig } from '../config/GameConfig.js';
  * @returns {Object} {canvas, ctx, CANVASSIZE, BLOCKSIZE, ANALYSISSIZE}
  */
 export function resizeCanvas(canvas, ctx, drawFunc) {
-	const boardarea = document.getElementsByClassName("boardarea");
+	const boards = document.getElementsByClassName('boardarea');
+
 	if (!canvas || !canvas.getContext) {
 		return null;
 	}
 
-	canvas.setAttribute("width", boardarea[0].clientWidth * 0.8);
-	canvas.setAttribute("height", boardarea[0].clientWidth * 0.8);
+	const container =
+		(boards && boards.length > 0 && boards[0]) || canvas.parentElement || canvas;
+	const containerWidth = container.clientWidth || BoardConfig.CANVASSIZE;
+	
+	// 横幅いっぱいを使用（パディングを考慮）
+	const padding = 32; // 1rem = 16px × 2（左右）
+	const logicalSize = Math.floor(containerWidth - padding);
+	
+	// 高DPI対応: devicePixelRatioを考慮
+	const dpr = window.devicePixelRatio || 1;
+	
+	// 実際のピクセルサイズ（高DPI対応）
+	const pixelSize = Math.floor(logicalSize * dpr);
 
-	const CANVASSIZE = canvas.clientWidth - BoardConfig.NUMSIZE - 1;
+	// キャンバスの実際のピクセルサイズを設定
+	canvas.width = pixelSize;
+	canvas.height = pixelSize;
+
+	// 表示サイズを論理サイズに設定（CSSで調整される）
+	canvas.style.width = logicalSize + 'px';
+	canvas.style.height = logicalSize + 'px';
+
+	// コンテキストをリセットしてからスケール（累積を防ぐ）
+	ctx.setTransform(1, 0, 0, 1, 0, 0);
+	ctx.scale(dpr, dpr);
+
+	// 論理サイズで計算
+	const CANVASSIZE = logicalSize - BoardConfig.NUMSIZE - 1;
 	const BLOCKSIZE = CANVASSIZE / BoardConfig.BOARDSIZE;
 	const ANALYSISSIZE = 0.5 * BLOCKSIZE;
 
