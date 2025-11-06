@@ -11,9 +11,10 @@
  * -------------------------------------------------------------------------- */
 
 // すべてのモジュールをインポート
-import { GameConfig } from './config/GameConfig.js';
+import { GameConfig, BoardConfig } from './config/GameConfig.js';
 import { GameController } from './game/GameController.js';
 import { CanvasRenderer } from './rendering/CanvasRenderer.js';
+import { KonvaBoardRenderer } from './rendering/KonvaBoardRenderer.js';
 import { refreshParam } from './rendering/UIRefresher.js';
 import { resizeCanvas } from './rendering/CanvasResizer.js';
 import { appState } from './state/AppState.js';
@@ -468,26 +469,63 @@ if (typeof window !== 'undefined') {
  */
 function canvas_resize() {
 	console.log('[canvas_resize] called, window.BOARDSIZE:', window.BOARDSIZE);
-	const result = resizeCanvas(canvas, ctx, null); // 描画は後で行う
-	if (result && renderer) {
-		console.log('[canvas_resize] result:', {
-			'BLOCKSIZE': result.BLOCKSIZE,
-			'CANVASSIZE': result.CANVASSIZE,
-			'ANALYSISSIZE': result.ANALYSISSIZE,
+	
+	// KonvaRendererの場合はコンテナサイズから計算
+	if (renderer && renderer instanceof KonvaBoardRenderer) {
+		const boards = document.getElementsByClassName('boardarea');
+		const container = (boards && boards.length > 0 && boards[0]) || document.getElementById('konva-container');
+		if (!container) {
+			console.warn('[canvas_resize] container not found');
+			return;
+		}
+		
+		const containerWidth = container.clientWidth || BoardConfig.CANVASSIZE;
+		const padding = 32;
+		const logicalSize = Math.floor(containerWidth - padding);
+		const boardsize = (typeof window !== 'undefined' && window.BOARDSIZE) ? window.BOARDSIZE : BoardConfig.BOARDSIZE;
+		const CANVASSIZE = logicalSize - BoardConfig.NUMSIZE;
+		const BLOCKSIZE = CANVASSIZE / boardsize;
+		const ANALYSISSIZE = 0.5 * BLOCKSIZE;
+		
+		console.log('[canvas_resize] Konva result:', {
+			'BLOCKSIZE': BLOCKSIZE,
+			'CANVASSIZE': CANVASSIZE,
+			'ANALYSISSIZE': ANALYSISSIZE,
 			'window.BOARDSIZE': window.BOARDSIZE
 		});
-		// まずrendererのサイズを更新してから描画する
-		renderer.updateSize(result.BLOCKSIZE, window.BOARDSIZE, window.NUMSIZE, result.CANVASSIZE);
-		window.BLOCKSIZE = result.BLOCKSIZE;
-		window.CANVASSIZE = result.CANVASSIZE;
-		window.ANALYSISSIZE = result.ANALYSISSIZE;
+		
+		renderer.updateSize(BLOCKSIZE, boardsize, window.NUMSIZE, CANVASSIZE);
+		window.BLOCKSIZE = BLOCKSIZE;
+		window.CANVASSIZE = CANVASSIZE;
+		window.ANALYSISSIZE = ANALYSISSIZE;
+		
 		console.log('[canvas_resize] after update, window.BLOCKSIZE:', window.BLOCKSIZE, 'window.BOARDSIZE:', window.BOARDSIZE);
+		
 		// サイズ更新後に描画
 		if (renderer && game) {
 			renderer.draw(() => refreshParam(game));
 		}
 	} else {
-		console.warn('[canvas_resize] result or renderer is null');
+		// 従来のCanvasRendererの場合
+		const result = resizeCanvas(canvas, ctx, null);
+		if (result && renderer) {
+			console.log('[canvas_resize] result:', {
+				'BLOCKSIZE': result.BLOCKSIZE,
+				'CANVASSIZE': result.CANVASSIZE,
+				'ANALYSISSIZE': result.ANALYSISSIZE,
+				'window.BOARDSIZE': window.BOARDSIZE
+			});
+			renderer.updateSize(result.BLOCKSIZE, window.BOARDSIZE, window.NUMSIZE, result.CANVASSIZE);
+			window.BLOCKSIZE = result.BLOCKSIZE;
+			window.CANVASSIZE = result.CANVASSIZE;
+			window.ANALYSISSIZE = result.ANALYSISSIZE;
+			console.log('[canvas_resize] after update, window.BLOCKSIZE:', window.BLOCKSIZE, 'window.BOARDSIZE:', window.BOARDSIZE);
+			if (renderer && game) {
+				renderer.draw(() => refreshParam(game));
+			}
+		} else {
+			console.warn('[canvas_resize] result or renderer is null');
+		}
 	}
 }
 
@@ -565,7 +603,9 @@ function init() {
 
 	gameEndFlag = 0;
 	game = new GameController(Role[0], Role[1]);
-	renderer = new CanvasRenderer(canvas, ctx, game, appState);
+	
+	// KonvaBoardRendererを使用
+	renderer = new KonvaBoardRenderer('konva-container', game, appState);
 	appState.setRenderer(renderer);
 	
 	// グローバル変数として直接設定
@@ -574,27 +614,100 @@ function init() {
 	}
 	window.renderer = renderer;
 
-	canvas.onmousemove = moveMouse;
-	canvas.onclick = function () {
-		console.log('[canvas.onclick]', {
-			'AIthinkFlag': AIthinkFlag,
-			'mouseBlockX/Y': [mouseBlockX, mouseBlockY],
-			'game.turn': game ? game.turn : 'N/A',
-			'game.select': game ? game.select : 'N/A',
-			'game.ball': game ? game.ball : 'N/A',
-			'game.pos': game ? game.pos : 'N/A'
+	// Konva Stageからマウス/タッチイベントを取得
+	const konvaStage = renderer.getStage();
+	if (konvaStage) {
+		let touchStartPos = null;
+		
+		// マウス移動とタッチ移動の両方に対応
+		konvaStage.on('mousemove touchmove', (e) => {
+			if (e.evt) {
+				e.evt.preventDefault(); // タッチイベントのデフォルト動作を防ぐ
+			}
+			const blockPos = renderer.getBlockPositionFromEvent(e);
+			if (blockPos.x >= 0 && blockPos.y >= 0) {
+				mouseBlockX = blockPos.x;
+				mouseBlockY = blockPos.y;
+			}
 		});
-		if (AIthinkFlag == 0) {
-			console.log('[canvas.onclick] calling humanTurn with', [mouseBlockX, mouseBlockY]);
-			game.humanTurn(mouseBlockX, mouseBlockY, () => {
-				if (renderer) {
-					renderer.draw(() => refreshParam(game));
+		
+		// クリックイベント（デスクトップとタッチデバイスの両方で発火）
+		konvaStage.on('click', (e) => {
+			if (e.evt) {
+				e.evt.preventDefault();
+			}
+			const blockPos = renderer.getBlockPositionFromEvent(e);
+			console.log('[konva.onclick]', {
+				'AIthinkFlag': AIthinkFlag,
+				'mouseBlockX/Y': [blockPos.x, blockPos.y],
+				'game.turn': game ? game.turn : 'N/A',
+				'game.select': game ? game.select : 'N/A',
+				'game.ball': game ? game.ball : 'N/A',
+				'game.pos': game ? game.pos : 'N/A'
+			});
+			if (AIthinkFlag == 0 && blockPos.x >= 0 && blockPos.y >= 0) {
+				mouseBlockX = blockPos.x;
+				mouseBlockY = blockPos.y;
+				console.log('[konva.onclick] calling humanTurn with', [mouseBlockX, mouseBlockY]);
+				game.humanTurn(mouseBlockX, mouseBlockY, () => {
+					if (renderer) {
+						renderer.draw(() => refreshParam(game));
+					}
+				}, gameOver, appState);
+			} else {
+				console.warn('[konva.onclick] AI is thinking or invalid position, ignoring click');
+			}
+		});
+		
+		// タッチスタート時（タップ検出のため）
+		konvaStage.on('touchstart', (e) => {
+			if (e.evt) {
+				e.evt.preventDefault();
+			}
+			const blockPos = renderer.getBlockPositionFromEvent(e);
+			if (blockPos.x >= 0 && blockPos.y >= 0) {
+				touchStartPos = { x: blockPos.x, y: blockPos.y };
+				mouseBlockX = blockPos.x;
+				mouseBlockY = blockPos.y;
+			}
+		});
+		
+		// タッチエンド時（タップとして処理）
+		konvaStage.on('touchend', (e) => {
+			if (e.evt) {
+				e.evt.preventDefault();
+			}
+			if (touchStartPos) {
+				const blockPos = renderer.getBlockPositionFromEvent(e);
+				// タッチ開始位置と終了位置が近い場合のみタップとして処理
+				if (blockPos.x >= 0 && blockPos.y >= 0 &&
+					Math.abs(blockPos.x - touchStartPos.x) <= 1 &&
+					Math.abs(blockPos.y - touchStartPos.y) <= 1) {
+					console.log('[konva.ontouchend/tap]', {
+						'AIthinkFlag': AIthinkFlag,
+						'mouseBlockX/Y': [blockPos.x, blockPos.y],
+						'game.turn': game ? game.turn : 'N/A',
+						'game.select': game ? game.select : 'N/A',
+						'game.ball': game ? game.ball : 'N/A',
+						'game.pos': game ? game.pos : 'N/A'
+					});
+					if (AIthinkFlag == 0) {
+						mouseBlockX = blockPos.x;
+						mouseBlockY = blockPos.y;
+						console.log('[konva.ontouchend/tap] calling humanTurn with', [mouseBlockX, mouseBlockY]);
+						game.humanTurn(mouseBlockX, mouseBlockY, () => {
+							if (renderer) {
+								renderer.draw(() => refreshParam(game));
+							}
+						}, gameOver, appState);
+					} else {
+						console.warn('[konva.ontouchend/tap] AI is thinking, ignoring tap');
+					}
 				}
-			}, gameOver, appState);
-		} else {
-			console.warn('[canvas.onclick] AI is thinking, ignoring click');
-		}
-	};
+				touchStartPos = null;
+			}
+		});
+	}
 
 	tag = "";
 	for (let i = 0; i < window.MAXTAG; i++) {
