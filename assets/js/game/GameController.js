@@ -70,6 +70,12 @@ export class GameController {
 		} else if (appState?.renderer) {
 			rendererToUse = appState.renderer;
 		}
+		
+		// 評価値をクリア（1手動かす前に評価値を消す）
+		if (rendererToUse && typeof rendererToUse.clearAnalysisValues === 'function') {
+			rendererToUse.clearAnalysisValues();
+		}
+		
 		// 超高速の場合はアニメーションロックをスキップ
 		if (rendererToUse && rendererToUse.animationManager) {
 			if (rendererToUse.animationManager.speedMultiplier === 0) {
@@ -597,6 +603,17 @@ export class GameController {
 		if (typeof window.clearError === 'function') {
 			window.clearError();
 		}
+		
+		// 評価値をクリア（1手動かす前に評価値を消す）
+		let rendererToUse = null;
+		if (typeof window !== 'undefined' && window.renderer) {
+			rendererToUse = window.renderer;
+		} else if (appState?.renderer) {
+			rendererToUse = appState.renderer;
+		}
+		if (rendererToUse && typeof rendererToUse.clearAnalysisValues === 'function') {
+			rendererToUse.clearAnalysisValues();
+		}
 
 		// AIの思考
 		if (this.select == 0 && this.turn == 1) {
@@ -685,9 +702,13 @@ export class GameController {
 				return;
 			} else {
 				// タグアニメーションを開始
-				let rendererToUse = appState?.renderer;
-				if (!rendererToUse && typeof window !== 'undefined' && window.renderer) {
-					rendererToUse = window.renderer;
+				// rendererを取得（既に宣言されている変数を使用）
+				if (!rendererToUse) {
+					if (appState?.renderer) {
+						rendererToUse = appState.renderer;
+					} else if (typeof window !== 'undefined' && window.renderer) {
+						rendererToUse = window.renderer;
+					}
 				}
 				if (appState && rendererToUse && rendererToUse.animationManager) {
 					const animationManager = rendererToUse.animationManager;
@@ -854,9 +875,13 @@ export class GameController {
 				const toY = this.pos[arrayTurn(this.turn)][catchableResult][1];
 				
 				// パスアニメーションを開始
-				let rendererToUse = appState?.renderer;
-				if (!rendererToUse && typeof window !== 'undefined' && window.renderer) {
-					rendererToUse = window.renderer;
+				// rendererを取得（既に宣言されている変数を使用）
+				if (!rendererToUse) {
+					if (appState?.renderer) {
+						rendererToUse = appState.renderer;
+					} else if (typeof window !== 'undefined' && window.renderer) {
+						rendererToUse = window.renderer;
+					}
 				}
 				if (appState && rendererToUse && rendererToUse.animationManager) {
 					const animationManager = rendererToUse.animationManager;
@@ -1067,9 +1092,11 @@ export class GameController {
 			}
 		}
 		// アニメーションが開始されていない場合のみ、ここで次のターン処理と描画を行う
-		// rendererを取得
-		let rendererToUse = appState?.renderer;
-		if (!rendererToUse && typeof window !== 'undefined' && window.renderer) {
+		// rendererを取得（既に宣言されている変数を使用）
+		rendererToUse = null;
+		if (appState?.renderer) {
+			rendererToUse = appState.renderer;
+		} else if (typeof window !== 'undefined' && window.renderer) {
 			rendererToUse = window.renderer;
 		}
 		const hasAnimation = appState && rendererToUse && rendererToUse.animationManager && 

@@ -68,6 +68,11 @@ export class KonvaBoardRenderer {
 		this.feedbackTexts = [];
 		this.coordinateLabels = [];
 		
+		// 解析評価値データ
+		this.evalList = null;
+		this.actionList = null;
+		this.movableList = null;
+		
 		// ボール画像の読み込み
 		this.ballImageObj = null;
 		this.loadBallImage();
@@ -259,6 +264,9 @@ export class KonvaBoardRenderer {
 			// フィードバックエフェクトの描画
 			this.drawFeedbackEffects();
 			
+			// 解析評価値の描画
+			this.drawAnalysisValues();
+			
 			this.needsFullRedraw = false;
 		} else {
 			// アニメーション中は動的要素のみ更新
@@ -274,6 +282,9 @@ export class KonvaBoardRenderer {
 			this.drawBall();
 			this.drawTagEffect();
 			this.drawFeedbackEffects();
+			
+			// 解析評価値の描画
+			this.drawAnalysisValues();
 		}
 		
 		// バッチ描画で最適化
@@ -726,6 +737,84 @@ export class KonvaBoardRenderer {
 			this.uiLayer.add(text);
 			this.feedbackTexts.push(text);
 		}
+	}
+
+	/**
+	 * 解析評価値を描画
+	 */
+	drawAnalysisValues() {
+		if (!this.evalList || !this.actionList || !this.movableList) {
+			return;
+		}
+
+		const fontSize = (typeof window !== 'undefined' && window.ANALYSISSIZE) ? window.ANALYSISSIZE : GameConfig.BoardConfig.ANALYSISSIZE;
+
+		// 移動の評価値
+		for (let i = 0; i < this.movableList.length; i++) {
+			if (i >= this.evalList.length) break;
+			
+			const centerX = this.actionList[i][0] * this.BLOCKSIZE + this.BLOCKSIZE * 0.5 + this.NUMSIZE;
+			const centerY = this.actionList[i][1] * this.BLOCKSIZE + this.BLOCKSIZE * 0.5 + this.NUMSIZE;
+			
+			const evalText = new Konva.Text({
+				x: centerX,
+				y: centerY,
+				text: Math.floor(this.evalList[i]).toString(),
+				fontSize: fontSize,
+				fontFamily: 'Osaka, sans-serif',
+				fill: GameConfig.Colors.ANAMOVEFONTCOLOR,
+				align: 'center',
+				verticalAlign: 'middle',
+			});
+			evalText.offsetX(evalText.width() / 2);
+			evalText.offsetY(evalText.height() / 2);
+			
+			this.uiLayer.add(evalText);
+		}
+
+		// パスの評価値
+		for (let i = this.movableList.length; i < this.movableList.length + (this.actionList.length - this.movableList.length); i++) {
+			if (i >= this.evalList.length) break;
+			
+			const centerX = this.actionList[i][0] * this.BLOCKSIZE + this.BLOCKSIZE * 0.5 + this.NUMSIZE;
+			const centerY = this.actionList[i][1] * this.BLOCKSIZE + this.BLOCKSIZE * 0.5 + this.NUMSIZE;
+			
+			const evalText = new Konva.Text({
+				x: centerX,
+				y: centerY,
+				text: Math.floor(this.evalList[i]).toString(),
+				fontSize: fontSize,
+				fontFamily: 'Osaka, sans-serif',
+				fill: GameConfig.Colors.ANAPASSFONTCOLOR,
+				align: 'center',
+				verticalAlign: 'middle',
+			});
+			evalText.offsetX(evalText.width() / 2);
+			evalText.offsetY(evalText.height() / 2);
+			
+			this.uiLayer.add(evalText);
+		}
+	}
+
+	/**
+	 * 解析評価値を設定
+	 * @param {Array} evalList - 評価値リスト
+	 * @param {Array} actionList - アクションリスト（移動とパスの組み合わせ）
+	 * @param {Array} movableList - 移動可能な位置のリスト
+	 */
+	setAnalysisValues(evalList, actionList, movableList) {
+		this.evalList = evalList;
+		this.actionList = actionList;
+		this.movableList = movableList;
+	}
+
+	/**
+	 * 解析評価値をクリア
+	 */
+	clearAnalysisValues() {
+		this.evalList = null;
+		this.actionList = null;
+		this.movableList = null;
 	}
 
 	/**

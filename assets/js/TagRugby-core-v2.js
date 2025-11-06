@@ -649,6 +649,10 @@ function init() {
 				mouseBlockX = blockPos.x;
 				mouseBlockY = blockPos.y;
 				console.log('[konva.onclick] calling humanTurn with', [mouseBlockX, mouseBlockY]);
+				// 評価値をクリア
+				if (renderer instanceof KonvaBoardRenderer) {
+					renderer.clearAnalysisValues();
+				}
 				game.humanTurn(mouseBlockX, mouseBlockY, () => {
 					if (renderer) {
 						renderer.draw(() => refreshParam(game));
@@ -695,6 +699,10 @@ function init() {
 						mouseBlockX = blockPos.x;
 						mouseBlockY = blockPos.y;
 						console.log('[konva.ontouchend/tap] calling humanTurn with', [mouseBlockX, mouseBlockY]);
+						// 評価値をクリア
+						if (renderer instanceof KonvaBoardRenderer) {
+							renderer.clearAnalysisValues();
+						}
 						game.humanTurn(mouseBlockX, mouseBlockY, () => {
 							if (renderer) {
 								renderer.draw(() => refreshParam(game));
@@ -936,15 +944,13 @@ function analysis() {
 	}
 	if (!renderer || !game) return;
 
-	ctx.clearRect(0, 0, window.CANVASSIZE + window.NUMSIZE, window.CANVASSIZE + window.NUMSIZE);
-	renderer.draw(() => refreshParam(game));
-
-	ctx.beginPath();
-	ctx.font = window.ANALYSISSIZE + "px Osaka";
-	ctx.textBaseline = "middle";
-	ctx.textAlign = "center";
-	ctx.globalAlpha = 1;
-	ctx.fillStyle = GameConfig.Colors.FONTCOLOR;
+	// KonvaRendererの場合はCanvasのクリアをスキップ
+	if (renderer instanceof KonvaBoardRenderer) {
+		renderer.draw(() => refreshParam(game));
+	} else {
+		ctx.clearRect(0, 0, window.CANVASSIZE + window.NUMSIZE, window.CANVASSIZE + window.NUMSIZE);
+		renderer.draw(() => refreshParam(game));
+	}
 
 	let action_list = [];
 	const movablelist = getMovableList(
@@ -964,12 +970,24 @@ function analysis() {
 	action_list = action_list.concat(passlist);
 
 	if (action_list.length == 0) {
+		// 評価値がない場合はクリア
+		if (renderer instanceof KonvaBoardRenderer) {
+			renderer.clearAnalysisValues();
+			renderer.draw(() => refreshParam(game));
+		}
 		return;
 	}
 
 	const AI_name = anaRole[arrayTurn(game.turn)];
 	const aiFunc = rugby_AI[AI_name];
-	if (!aiFunc) return;
+	if (!aiFunc) {
+		// AI関数がない場合はクリア
+		if (renderer instanceof KonvaBoardRenderer) {
+			renderer.clearAnalysisValues();
+			renderer.draw(() => refreshParam(game));
+		}
+		return;
+	}
 
 	const [nextmove, eval_list] = aiFunc(
 		game.pos,
@@ -979,21 +997,35 @@ function analysis() {
 		game.tagged
 	);
 
-	ctx.fillStyle = GameConfig.Colors.ANAMOVEFONTCOLOR;
-	for (let i = 0; i < movablelist.length; i++) {
-		ctx.fillText(
-			Math.floor(eval_list[i]),
-			action_list[i][0] * window.BLOCKSIZE + ~~(window.BLOCKSIZE * 0.5) + window.NUMSIZE + 0.5,
-			action_list[i][1] * window.BLOCKSIZE + ~~(window.BLOCKSIZE * 0.5) + window.NUMSIZE + 0.5
-		);
-	}
-	ctx.fillStyle = GameConfig.Colors.ANAPASSFONTCOLOR;
-	for (let i = movablelist.length; i < movablelist.length + passlist.length; i++) {
-		ctx.fillText(
-			Math.floor(eval_list[i]),
-			action_list[i][0] * window.BLOCKSIZE + ~~(window.BLOCKSIZE * 0.5) + window.NUMSIZE + 0.5,
-			action_list[i][1] * window.BLOCKSIZE + ~~(window.BLOCKSIZE * 0.5) + window.NUMSIZE + 0.5
-		);
+	// KonvaRendererの場合は評価値を設定して再描画
+	if (renderer instanceof KonvaBoardRenderer) {
+		renderer.setAnalysisValues(eval_list, action_list, movablelist);
+		renderer.draw(() => refreshParam(game));
+	} else {
+		// CanvasRendererの場合は従来通りCanvas APIで描画
+		ctx.beginPath();
+		ctx.font = window.ANALYSISSIZE + "px Osaka";
+		ctx.textBaseline = "middle";
+		ctx.textAlign = "center";
+		ctx.globalAlpha = 1;
+		ctx.fillStyle = GameConfig.Colors.FONTCOLOR;
+
+		ctx.fillStyle = GameConfig.Colors.ANAMOVEFONTCOLOR;
+		for (let i = 0; i < movablelist.length; i++) {
+			ctx.fillText(
+				Math.floor(eval_list[i]),
+				action_list[i][0] * window.BLOCKSIZE + ~~(window.BLOCKSIZE * 0.5) + window.NUMSIZE + 0.5,
+				action_list[i][1] * window.BLOCKSIZE + ~~(window.BLOCKSIZE * 0.5) + window.NUMSIZE + 0.5
+			);
+		}
+		ctx.fillStyle = GameConfig.Colors.ANAPASSFONTCOLOR;
+		for (let i = movablelist.length; i < movablelist.length + passlist.length; i++) {
+			ctx.fillText(
+				Math.floor(eval_list[i]),
+				action_list[i][0] * window.BLOCKSIZE + ~~(window.BLOCKSIZE * 0.5) + window.NUMSIZE + 0.5,
+				action_list[i][1] * window.BLOCKSIZE + ~~(window.BLOCKSIZE * 0.5) + window.NUMSIZE + 0.5
+			);
+		}
 	}
 }
 
