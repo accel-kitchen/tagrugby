@@ -45,32 +45,61 @@ export function refreshParam(gameState) {
 	}
 
 	document.getElementById("param_step").innerHTML = gameState.step;
+	// インライン要素も更新
+	const paramStepInline = document.getElementById("param_step_inline");
+	if (paramStepInline) {
+		paramStepInline.innerHTML = gameState.step;
+	}
 
 	for (let i = 0, len = 4; i <= len; i++) {
 		document
 			.getElementById("param_ball_" + i)
 			.classList.remove("paramBadgeSelected");
+		const paramBallInline = document.getElementById("param_ball_" + i + "_inline");
+		if (paramBallInline) {
+			paramBallInline.classList.remove("paramBadgeSelected");
+		}
 	}
 	document
 		.getElementById("param_ball_" + gameState.ball)
 		.classList.add("paramBadgeSelected");
+	const paramBallInline = document.getElementById("param_ball_" + gameState.ball + "_inline");
+	if (paramBallInline) {
+		paramBallInline.classList.add("paramBadgeSelected");
+	}
 
 	for (let i = 0, len = 4; i <= len; i++) {
 		document
 			.getElementById("param_select_" + i)
 			.classList.remove("paramBadgeSelected");
+		const paramSelectInline = document.getElementById("param_select_" + i + "_inline");
+		if (paramSelectInline) {
+			paramSelectInline.classList.remove("paramBadgeSelected");
+		}
 	}
 	document
 		.getElementById("param_select_" + gameState.select)
 		.classList.add("paramBadgeSelected");
+	const paramSelectInline = document.getElementById("param_select_" + gameState.select + "_inline");
+	if (paramSelectInline) {
+		paramSelectInline.classList.add("paramBadgeSelected");
+	}
 	for (let i = 1, len = 4; i <= len; i++) {
 		document
 			.getElementById("param_tag_" + i)
 			.classList.remove("paramBadgeSelected");
+		const paramTagInline = document.getElementById("param_tag_" + i + "_inline");
+		if (paramTagInline) {
+			paramTagInline.classList.remove("paramBadgeSelected");
+		}
 	}
 	document
 		.getElementById("param_tag_" + gameState.tag)
 		.classList.add("paramBadgeSelected");
+	const paramTagInline = document.getElementById("param_tag_" + gameState.tag + "_inline");
+	if (paramTagInline) {
+		paramTagInline.classList.add("paramBadgeSelected");
+	}
 
 	if (gameState.wait !== -1) {
 		document
@@ -105,11 +134,19 @@ export function refreshParam(gameState) {
 			.getElementById("param_turn_0")
 			.classList.remove("paramBadgeSelected");
 		document.getElementById("param_turn_1").classList.add("paramBadgeSelected");
+		const paramTurn0Inline = document.getElementById("param_turn_0_inline");
+		const paramTurn1Inline = document.getElementById("param_turn_1_inline");
+		if (paramTurn0Inline) paramTurn0Inline.classList.remove("paramBadgeSelected");
+		if (paramTurn1Inline) paramTurn1Inline.classList.add("paramBadgeSelected");
 	} else {
 		document
 			.getElementById("param_turn_1")
 			.classList.remove("paramBadgeSelected");
 		document.getElementById("param_turn_0").classList.add("paramBadgeSelected");
+		const paramTurn0Inline = document.getElementById("param_turn_0_inline");
+		const paramTurn1Inline = document.getElementById("param_turn_1_inline");
+		if (paramTurn1Inline) paramTurn1Inline.classList.remove("paramBadgeSelected");
+		if (paramTurn0Inline) paramTurn0Inline.classList.add("paramBadgeSelected");
 	}
 	for (let i = 0, len = distance_defense.length - 1; i <= len; i++) {
 		document.getElementById("param_distance_" + i).innerHTML =
@@ -117,16 +154,36 @@ export function refreshParam(gameState) {
 	}
 	document.getElementById("param_distance_defense_min").innerHTML =
 		distance_defense_min.toFixed(1);
+	const paramDistanceDefenseMinInline = document.getElementById("param_distance_defense_min_inline");
+	if (paramDistanceDefenseMinInline) {
+		paramDistanceDefenseMinInline.innerHTML = distance_defense_min.toFixed(1);
+	}
 	document.getElementById("param_horizontal_diff_from_ball").innerHTML =
 		horizontal_diff_from_ball;
+	const paramHorizontalDiffInline = document.getElementById("param_horizontal_diff_from_ball_inline");
+	if (paramHorizontalDiffInline) {
+		paramHorizontalDiffInline.innerHTML = horizontal_diff_from_ball;
+	}
 	document.getElementById("param_vertical_diff_from_ball").innerHTML =
 		vertical_diff_from_ball;
+	const paramVerticalDiffInline = document.getElementById("param_vertical_diff_from_ball_inline");
+	if (paramVerticalDiffInline) {
+		paramVerticalDiffInline.innerHTML = vertical_diff_from_ball;
+	}
 	for (let i = 0, len = defenseLine.length - 1; i <= len; i++) {
 		document.getElementById("param_defenseLine_" + i).innerHTML =
 			defenseLine[i];
+		const paramDefenseLineInline = document.getElementById("param_defenseLine_" + i + "_inline");
+		if (paramDefenseLineInline) {
+			paramDefenseLineInline.innerHTML = defenseLine[i];
+		}
 	}
 	for (let i = 0, len = attackLine.length - 1; i <= len; i++) {
 		document.getElementById("param_attackLine_" + i).innerHTML = attackLine[i];
+		const paramAttackLineInline = document.getElementById("param_attackLine_" + i + "_inline");
+		if (paramAttackLineInline) {
+			paramAttackLineInline.innerHTML = attackLine[i];
+		}
 	}
 	document.getElementById("param_deviation_from_uniform_position").innerHTML =
 		deviation_from_uniform_position;

@@ -633,38 +633,50 @@ function init() {
 		
 		// クリックイベント（デスクトップとタッチデバイスの両方で発火）
 		konvaStage.on('click', (e) => {
+			// 編集モード中は通常のクリック処理をスキップ
+			if (appState && appState.positionEditMode) {
+				return;
+			}
+			
+			console.log('[konva.onclick] Click event fired', {
+				positionEditMode: appState ? appState.positionEditMode : 'N/A',
+				AIthinkFlag: AIthinkFlag
+			});
+			
 			if (e.evt) {
 				e.evt.preventDefault();
 			}
 			const blockPos = renderer.getBlockPositionFromEvent(e);
-			console.log('[konva.onclick]', {
-				'AIthinkFlag': AIthinkFlag,
-				'mouseBlockX/Y': [blockPos.x, blockPos.y],
-				'game.turn': game ? game.turn : 'N/A',
-				'game.select': game ? game.select : 'N/A',
-				'game.ball': game ? game.ball : 'N/A',
-				'game.pos': game ? game.pos : 'N/A'
-			});
+			console.log('[konva.onclick] blockPos:', blockPos);
+			
 			if (AIthinkFlag == 0 && blockPos.x >= 0 && blockPos.y >= 0) {
 				mouseBlockX = blockPos.x;
 				mouseBlockY = blockPos.y;
-				console.log('[konva.onclick] calling humanTurn with', [mouseBlockX, mouseBlockY]);
 				// 評価値をクリア
 				if (renderer instanceof KonvaBoardRenderer) {
 					renderer.clearAnalysisValues();
 				}
+				console.log('[konva.onclick] Calling humanTurn with:', { x: mouseBlockX, y: mouseBlockY });
 				game.humanTurn(mouseBlockX, mouseBlockY, () => {
 					if (renderer) {
 						renderer.draw(() => refreshParam(game));
 					}
 				}, gameOver, appState);
 			} else {
-				console.warn('[konva.onclick] AI is thinking or invalid position, ignoring click');
+				console.warn('[konva.onclick] AI is thinking or invalid position, ignoring click', {
+					AIthinkFlag: AIthinkFlag,
+					blockPos: blockPos
+				});
 			}
 		});
 		
 		// タッチスタート時（タップ検出のため）
 		konvaStage.on('touchstart', (e) => {
+			// 編集モード中は通常のタッチ処理をスキップ
+			if (appState && appState.positionEditMode) {
+				return;
+			}
+			
 			if (e.evt) {
 				e.evt.preventDefault();
 			}
@@ -677,51 +689,51 @@ function init() {
 		});
 		
 		// タッチエンド時（タップとして処理）
-		konvaStage.on('touchend', (e) => {
-			if (e.evt) {
-				e.evt.preventDefault();
-			}
-			if (touchStartPos) {
-				const blockPos = renderer.getBlockPositionFromEvent(e);
-				// タッチ開始位置と終了位置が近い場合のみタップとして処理
-				if (blockPos.x >= 0 && blockPos.y >= 0 &&
-					Math.abs(blockPos.x - touchStartPos.x) <= 1 &&
-					Math.abs(blockPos.y - touchStartPos.y) <= 1) {
-					console.log('[konva.ontouchend/tap]', {
-						'AIthinkFlag': AIthinkFlag,
-						'mouseBlockX/Y': [blockPos.x, blockPos.y],
-						'game.turn': game ? game.turn : 'N/A',
-						'game.select': game ? game.select : 'N/A',
-						'game.ball': game ? game.ball : 'N/A',
-						'game.pos': game ? game.pos : 'N/A'
-					});
-					if (AIthinkFlag == 0) {
-						mouseBlockX = blockPos.x;
-						mouseBlockY = blockPos.y;
-						console.log('[konva.ontouchend/tap] calling humanTurn with', [mouseBlockX, mouseBlockY]);
-						// 評価値をクリア
-						if (renderer instanceof KonvaBoardRenderer) {
-							renderer.clearAnalysisValues();
-						}
-						game.humanTurn(mouseBlockX, mouseBlockY, () => {
-							if (renderer) {
-								renderer.draw(() => refreshParam(game));
-							}
-						}, gameOver, appState);
-					} else {
-						console.warn('[konva.ontouchend/tap] AI is thinking, ignoring tap');
+				konvaStage.on('touchend', (e) => {
+					// 編集モード中は通常のタッチ処理をスキップ
+					if (appState && appState.positionEditMode) {
+						touchStartPos = null;
+						return;
 					}
-				}
-				touchStartPos = null;
-			}
-		});
+					
+					if (e.evt) {
+						e.evt.preventDefault();
+					}
+					if (touchStartPos) {
+						const blockPos = renderer.getBlockPositionFromEvent(e);
+						// タッチ開始位置と終了位置が近い場合のみタップとして処理
+						if (blockPos.x >= 0 && blockPos.y >= 0 &&
+							Math.abs(blockPos.x - touchStartPos.x) <= 1 &&
+							Math.abs(blockPos.y - touchStartPos.y) <= 1) {
+							if (AIthinkFlag == 0) {
+								mouseBlockX = blockPos.x;
+								mouseBlockY = blockPos.y;
+								// 評価値をクリア
+								if (renderer instanceof KonvaBoardRenderer) {
+									renderer.clearAnalysisValues();
+								}
+								game.humanTurn(mouseBlockX, mouseBlockY, () => {
+									if (renderer) {
+										renderer.draw(() => refreshParam(game));
+									}
+								}, gameOver, appState);
+							} else {
+								console.warn('[konva.ontouchend/tap] AI is thinking, ignoring tap');
+							}
+						}
+						touchStartPos = null;
+					}
+				});
 	}
 
 	tag = "";
 	for (let i = 0; i < window.MAXTAG; i++) {
 		tag += GameConfig.TAG_IMG;
 	}
-	document.getElementById("tag").innerHTML = tag;
+	const tagElementInit = document.getElementById("tag");
+	if (tagElementInit) {
+		tagElementInit.innerHTML = tag;
+	}
 
 	window.addEventListener("resize", canvas_resize, false);
 	canvas_resize();
@@ -743,32 +755,73 @@ function init() {
 			Role
 		);
 	}
+
+	// 初期配置編集モードのボタンイベントリスナーを設定
+	const toggleBtn = document.getElementById('togglePositionEditMode');
+	const saveBtn = document.getElementById('savePositionEdit');
+	const cancelBtn = document.getElementById('cancelPositionEdit');
+	
+	if (toggleBtn) {
+		toggleBtn.addEventListener('click', togglePositionEditMode);
+	}
+	if (saveBtn) {
+		saveBtn.addEventListener('click', savePositionEdit);
+	}
+	if (cancelBtn) {
+		cancelBtn.addEventListener('click', cancelPositionEdit);
+	}
 }
 
 /**
  * リマッチ初期化
  */
 function rematchInit() {
-	console.log('[rematchInit] called, window.BOARDSIZE:', window.BOARDSIZE);
-	document.getElementById("result").innerHTML = "";
+	// result要素が存在する場合のみクリア
+	const resultElement = document.getElementById("result");
+	if (resultElement) {
+		resultElement.innerHTML = "";
+	}
+	
 	AIthinkFlag = 0;
 	game.turn = 1;
-	game.pos[0] = window.POSDEFENSE.copy();
-	game.pos[1] = window.POSATTACK.copy();
+	
+	// 位置をコピー（.copy()メソッドが存在しない場合は配列をコピー）
+	if (window.POSDEFENSE && typeof window.POSDEFENSE.copy === 'function') {
+		game.pos[0] = window.POSDEFENSE.copy();
+	} else {
+		game.pos[0] = (window.POSDEFENSE || []).map(pos => [...pos]);
+	}
+	
+	if (window.POSATTACK && typeof window.POSATTACK.copy === 'function') {
+		game.pos[1] = window.POSATTACK.copy();
+	} else {
+		game.pos[1] = (window.POSATTACK || []).map(pos => [...pos]);
+	}
+	
 	game.select = 0;
 	game.ball = 0;
 	game.step = 0;
 	game.tag = window.MAXTAG;
+	
+	// ボールのインデックスが範囲内かチェック
+	if (game.pos[1] && game.ball >= game.pos[1].length) {
+		game.ball = 0; // 範囲外の場合は0にリセット
+	}
+	
 	tag = "";
 	for (let i = 0; i < window.MAXTAG; i++) {
 		tag += GameConfig.TAG_IMG;
 	}
-	document.getElementById("tag").innerHTML = tag;
-	console.log('[rematchInit] before renderer.draw, window.BOARDSIZE:', window.BOARDSIZE);
+	
+	// tag要素が存在する場合のみ設定
+	const tagElement = document.getElementById("tag");
+	if (tagElement) {
+		tagElement.innerHTML = tag;
+	}
+	
 	if (renderer) {
 		renderer.draw(() => refreshParam(game));
 	}
-	console.log('[rematchInit] after renderer.draw, window.BOARDSIZE:', window.BOARDSIZE);
 }
 
 /**
@@ -795,54 +848,30 @@ function rematch() {
  * 設定
  */
 function config() {
-	console.log('[config] called');
-	console.log('[config] ConfigForm.boardsize.value:', document.ConfigForm.boardsize.value);
-	
 	try {
 		const newBoardsize = parseInt(document.ConfigForm.boardsize.value);
-		console.log('[config] setting BOARDSIZE to:', newBoardsize, 'from', window.BOARDSIZE);
 		window.BOARDSIZE = newBoardsize;
 		window.attack_num = parseInt(document.ConfigForm.attackNum.value);
 		window.defense_num = parseInt(document.ConfigForm.defenseNum.value);
 		window.MAXTAG = parseInt(document.ConfigForm.tag_num.value);
 		
-		console.log('[config] updated values:', {
-			'BOARDSIZE': window.BOARDSIZE,
-			'attack_num': window.attack_num,
-			'defense_num': window.defense_num,
-			'MAXTAG': window.MAXTAG
-		});
-		
-		if (typeof pos_editor !== 'undefined') {
-			// 既存コードとの互換性のため、eval()を使用
-			// ただし、エラーハンドリングを追加
-			try {
-				eval(pos_editor.getValue());
-			} catch (err) {
-				document.getElementById("poserror").innerHTML = "初期位置の書き方が正しくありません。" + err;
-				return;
-			}
-		}
+		// CodeMirrorエディタは削除されたため、pos_editorは使用しない
+		// 初期配置はドラッグ&ドロップで編集するため、ここでは何もしない
 	} catch (err) {
 		console.error('[config] error:', err);
-		document.getElementById("poserror").innerHTML = "初期位置の書き方が正しくありません。" + err;
+		// poserror要素は削除されたため、エラーメッセージは表示しない
+		console.error('[config] Initial position error:', err);
 		return;
 	}
 	window.CATCH_PROBABILITY_LIST = [1, 1, 1, 1, 1, 0.8, 0.8, 0.6, 0.6, 0.4, 0.4];
 	window.POSATTACK = window.POSATTACK.slice(0, window.attack_num);
 	window.POSDEFENSE = window.POSDEFENSE.slice(0, window.defense_num);
 	
-	console.log('[config] calling rematchInit first');
 	rematchInit();
-	console.log('[config] after rematchInit, BOARDSIZE:', window.BOARDSIZE);
 	
-	console.log('[config] calling canvas_resize after rematchInit');
 	// キャンバスサイズを再計算して反映（rematchInitの後に呼ぶ）
 	if (typeof canvas_resize === 'function') {
 		canvas_resize();
-		console.log('[config] after canvas_resize, BOARDSIZE:', window.BOARDSIZE);
-	} else {
-		console.warn('[config] canvas_resize function not found');
 	}
 }
 
@@ -850,13 +879,22 @@ function config() {
  * リスタート
  */
 function restart() {
-	document.getElementById("attack_win_num").innerHTML = 0;
-	document.getElementById("defense_win_num").innerHTML = 0;
+	const attackWinNumElement = document.getElementById("attack_win_num");
+	if (attackWinNumElement) {
+		attackWinNumElement.innerHTML = 0;
+	}
+	const defenseWinNumElement = document.getElementById("defense_win_num");
+	if (defenseWinNumElement) {
+		defenseWinNumElement.innerHTML = 0;
+	}
 	tag = "";
 	for (let i = 0; i < window.MAXTAG; i++) {
 		tag += GameConfig.TAG_IMG;
 	}
-	document.getElementById("tag").innerHTML = tag;
+	const tagElementReset = document.getElementById("tag");
+	if (tagElementReset) {
+		tagElementReset.innerHTML = tag;
+	}
 
 	Role[1] = document.ControlForm.attack_role.value;
 	Role[0] = document.ControlForm.defense_role.value;
@@ -1034,10 +1072,95 @@ function analysis() {
  */
 function clearError() {
 	document.getElementById("codeerror").innerHTML = "";
-	document.getElementById("poserror").innerHTML = "";
+	// poserror要素は削除されたため、クリア処理は不要
 	if (typeof window.editor !== 'undefined' && window.editor.doc) {
 		window.editor.doc.getAllMarks().forEach((marker) => marker.clear());
 	}
+}
+
+/**
+ * 初期配置編集モードを切り替え
+ */
+function togglePositionEditMode() {
+	if (!renderer || !(renderer instanceof KonvaBoardRenderer)) {
+		console.warn('[togglePositionEditMode] KonvaBoardRenderer not available');
+		return;
+	}
+
+	const isEditing = appState.positionEditMode;
+	const toggleBtn = document.getElementById('togglePositionEditMode');
+	const saveBtn = document.getElementById('savePositionEdit');
+	const cancelBtn = document.getElementById('cancelPositionEdit');
+	const hintDiv = document.getElementById('positionEditHint');
+
+	if (isEditing) {
+		// 編集モードを無効化
+		renderer.disablePositionEditMode();
+		toggleBtn.classList.remove('d-none');
+		saveBtn.classList.add('d-none');
+		cancelBtn.classList.add('d-none');
+		hintDiv.classList.add('d-none');
+	} else {
+		// 編集モードを有効化
+		renderer.enablePositionEditMode();
+		toggleBtn.classList.add('d-none');
+		saveBtn.classList.remove('d-none');
+		cancelBtn.classList.remove('d-none');
+		hintDiv.classList.remove('d-none');
+	}
+}
+
+/**
+ * 初期配置編集を保存
+ */
+function savePositionEdit() {
+	if (!renderer || !renderer.positionEditor) {
+		return;
+	}
+
+	renderer.positionEditor.save();
+
+	// ゲーム状態をリセット
+	if (game) {
+		rematchInit();
+	}
+
+	togglePositionEditMode();
+	
+	// エディタの内容を更新（コードとして表示）
+	updatePositionEditorText();
+	
+	// 再描画してゲーム状態を反映
+	if (renderer) {
+		renderer.needsFullRedraw = true;
+		renderer.draw(() => refreshParam(game));
+	}
+}
+
+/**
+ * 初期配置編集をキャンセル
+ */
+function cancelPositionEdit() {
+	if (!renderer || !renderer.positionEditor) {
+		console.warn('[cancelPositionEdit] PositionEditor not available');
+		return;
+	}
+
+	renderer.positionEditor.cancel();
+	togglePositionEditMode();
+	
+	// ゲーム状態を元に戻す
+	if (game) {
+		rematchInit();
+	}
+}
+
+/**
+ * 位置エディタのテキストを更新
+ */
+function updatePositionEditorText() {
+	// CodeMirrorエディタは削除されたため、テキスト更新は不要
+	// 初期配置はwindow.POSATTACKとwindow.POSDEFENSEに直接保存される
 }
 
 /**
@@ -1111,6 +1234,9 @@ if (typeof window !== 'undefined') {
 	window.clearError = clearError;
 	window.save = save;
 	window.setAI = setAI;
+	window.togglePositionEditMode = togglePositionEditMode;
+	window.savePositionEdit = savePositionEdit;
+	window.cancelPositionEdit = cancelPositionEdit;
 
 	// グローバル変数も公開
 	window.Role = Role;

@@ -73,8 +73,36 @@
                   <span class="score-chip__value" id="tag">0</span>
                 </div>
                 <div class="score-chip__messages">
-                  <p id="pass" class="score-message"></p>
-                  <p id="result" class="score-message"></p>
+                  <div class="scoreboard-inline">
+                    <div class="scoreboard-header">
+                      <span class="scoreboard-label">勝敗メーター</span>
+                      <span class="scoreboard-description">試合の勝敗数を表示します</span>
+                    </div>
+                    <div class="progress scoreboard-progress-inline">
+                      <div
+                        id="attack_win_num"
+                        class="progress-bar bg-progress-attack"
+                        role="progressbar"
+                        style="width: 50%"
+                        aria-valuenow="0"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      >
+                        攻め手　0 回
+                      </div>
+                      <div
+                        id="defense_win_num"
+                        class="progress-bar bg-progress-defense"
+                        role="progressbar"
+                        style="width: 50%"
+                        aria-valuenow="0"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      >
+                        守り手　0 回
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </header>
@@ -114,6 +142,182 @@
                     AI保存
                   </button>
                 </div>
+              </div>
+            </form>
+          </section>
+
+          <section class="glass-panel chat-panel" aria-labelledby="chatPanelTitle">
+            <header class="panel-header">
+              <span class="eyebrow">AI Conversation</span>
+              <h2 id="chatPanelTitle">AIに相談する</h2>
+            </header>
+            <div id="chat-box"></div>
+            <div id="loadingIndicator" class="chat-loading" style="display: none;">読み込み中...</div>
+            <textarea
+              id="input-field"
+              class="form-control"
+              rows="5"
+              placeholder="戦術の疑問や分析のリクエストを入力"
+            ></textarea>
+            <button type="button" class="btn btn-primary w-100" onclick="sendChat()">
+              <span class="material-symbols-outlined">mic</span>
+              話しかける
+            </button>
+          </section>
+
+          <section class="glass-panel sample-panel" aria-labelledby="sampleTitle">
+            <header class="panel-header">
+              <span class="eyebrow">Scenario Presets</span>
+              <h2 id="sampleTitle">サンプル読み込み</h2>
+            </header>
+            <form name="SampleForm" class="control-form">
+              <div class="form-grid form-grid--compact">
+                <div class="form-field form-field--wide">
+                  <label for="samplenum">サンプル</label>
+                  <select name="samplenum" id="samplenum" class="form-select">
+                    <option value="1">1対1 (1)</option>
+                    <option value="2">1対1 (2)</option>
+                    <option value="3">1対1 (3)</option>
+                    <option value="4">2対2 (1)</option>
+                    <option value="5">2対2 (2)</option>
+                    <option value="6">2対2 (3)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="control-actions mt-3">
+                <button type="button" class="btn btn-primary w-100" onclick="sampleset()">
+                  <span class="material-symbols-outlined">file_download</span>
+                  読み込み
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section class="glass-panel config-panel" aria-labelledby="configTitle">
+            <header class="panel-header">
+              <span class="eyebrow">Environment</span>
+              <h2 id="configTitle">盤面コンフィグ</h2>
+            </header>
+            <form name="ConfigForm" class="control-form">
+              <div class="form-grid form-grid--compact">
+                <div class="form-field">
+                  <label for="boardsize">盤面サイズ</label>
+                  <select name="boardsize" id="boardsize" class="form-select">
+                    <option value="8">8×8</option>
+                    <option value="12">12×12</option>
+                    <option value="16">16×16</option>
+                    <option value="20" selected="selected">20×20</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="tag_num">タグの回数</label>
+                  <select name="tag_num" id="tag_num" class="form-select">
+                    <option value="1">1回</option>
+                    <option value="2">2回</option>
+                    <option value="3">3回</option>
+                    <option value="4" selected="selected">4回</option>
+                    <option value="5">5回</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="attackNum">攻め手人数</label>
+                  <select name="attackNum" id="attackNum" class="form-select">
+                    <option value="1">1人</option>
+                    <option value="2">2人</option>
+                    <option value="3">3人</option>
+                    <option value="4">4人</option>
+                    <option value="5" selected="selected">5人</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="defenseNum">守り手人数</label>
+                  <select name="defenseNum" id="defenseNum" class="form-select">
+                    <option value="1">1人</option>
+                    <option value="2">2人</option>
+                    <option value="3">3人</option>
+                    <option value="4">4人</option>
+                    <option value="5" selected="selected">5人</option>
+                  </select>
+                </div>
+              </div>
+              <div class="control-actions mt-3">
+                <button type="button" class="btn btn-outline-light w-100" onclick="config()">
+                  <span class="material-symbols-outlined">settings</span>
+                  設定を反映
+                </button>
+              </div>
+              <div class="editor-mode-toggle mt-3">
+                <button type="button" class="btn btn-outline-primary w-100" id="togglePositionEditMode">
+                  <span class="material-symbols-outlined">edit</span>
+                  初期配置編集
+                </button>
+                <button type="button" class="btn btn-outline-secondary w-100 d-none mt-2" id="savePositionEdit">
+                  <span class="material-symbols-outlined">save</span>
+                  保存
+                </button>
+                <button type="button" class="btn btn-outline-secondary w-100 d-none mt-2" id="cancelPositionEdit">
+                  <span class="material-symbols-outlined">close</span>
+                  キャンセル
+                </button>
+              </div>
+              <div class="position-edit-hint d-none mt-2" id="positionEditHint">
+                <small class="text-muted">
+                  <span class="material-symbols-outlined">info</span>
+                  盤面上のコマをドラッグして移動できます。コマをダブルクリックでディフェンス⇔アタックを切り替え、空きマスをダブルクリックでコマを生成できます。
+                </small>
+              </div>
+            </form>
+          </section>
+        </div>
+
+        <div class="col-xxl-4 d-flex flex-column gap-4">
+          <section class="glass-panel control-panel" aria-labelledby="controlPanelTitle">
+            <header class="panel-header">
+              <span class="eyebrow">Match Control</span>
+              <div>
+                <h2 id="controlPanelTitle">ゲーム設定</h2>
+              </div>
+            </header>
+            <form name="ControlForm" class="control-form">
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="attack_role">攻め手</label>
+                  <select name="attack_role" id="attack_role" class="form-select">
+                    <option value="human">人</option>
+                    <option value="AttackAI">AI</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="defense_role">守り手</label>
+                  <select name="defense_role" id="defense_role" class="form-select">
+                    <option value="human">人間</option>
+                    <option value="DefenseSample1">AI1</option>
+                    <option value="DefenseSample2">AI2</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label for="game_speed">試合スピード</label>
+                  <select name="game_speed" id="game_speed" class="form-select">
+                    <option value="0">低速</option>
+                    <option value="1">高速</option>
+                    <option value="2">超高速</option>
+                  </select>
+                </div>
+              </div>
+              <div class="control-actions">
+                <button type="button" class="btn btn-primary w-100" onclick="restart()">
+                  <span class="material-symbols-outlined">play_arrow</span>
+                  攻守を更新
+                </button>
+                <button type="button" class="btn btn-secondary w-100" onclick="config()">
+                  <span class="material-symbols-outlined">restart_alt</span>
+                  盤面リセット
+                </button>
+                <input type="hidden" name="ana_role" value="AttackAI" />
+                <button type="button" class="btn btn-outline-light w-100" onclick="analysis()">
+                  <span class="material-symbols-outlined">monitoring</span>
+                  解析（評価値表示）
+                </button>
               </div>
             </form>
           </section>
@@ -272,208 +476,6 @@
               </ul>
             </div>
           </section>
-
-          <section class="glass-panel code-editor" aria-labelledby="positionEditorTitle">
-            <header class="panel-header">
-              <span class="eyebrow">Scenario Layout</span>
-              <div>
-                <h2 id="positionEditorTitle">初期配置コード</h2>
-              </div>
-            </header>
-            <form name="CodingForm" class="editor-form">
-              <div class="editor-form__group">
-                <div class="form-hint" id="poserror"></div>
-                <textarea class="form-control" name="initial_pos" rows="10"></textarea>
-              </div>
-            </form>
-          </section>
-        </div>
-
-        <div class="col-xxl-4 d-flex flex-column gap-4">
-          <section class="glass-panel control-panel" aria-labelledby="controlPanelTitle">
-            <header class="panel-header">
-              <span class="eyebrow">Match Control</span>
-              <div>
-                <h2 id="controlPanelTitle">ゲーム設定</h2>
-              </div>
-            </header>
-            <form name="ControlForm" class="control-form">
-              <div class="form-grid">
-                <div class="form-field">
-                  <label for="attack_role">攻め手</label>
-                  <select name="attack_role" id="attack_role" class="form-select">
-                    <option value="human">人</option>
-                    <option value="AttackAI">AI</option>
-                  </select>
-                </div>
-                <div class="form-field">
-                  <label for="defense_role">守り手</label>
-                  <select name="defense_role" id="defense_role" class="form-select">
-                    <option value="human">人間</option>
-                    <option value="DefenseSample1">AI1</option>
-                    <option value="DefenseSample2">AI2</option>
-                  </select>
-                </div>
-                <div class="form-field">
-                  <label for="game_speed">試合スピード</label>
-                  <select name="game_speed" id="game_speed" class="form-select">
-                    <option value="0">低速</option>
-                    <option value="1">高速</option>
-                    <option value="2">超高速</option>
-                  </select>
-                </div>
-              </div>
-              <div class="control-actions">
-                <button type="button" class="btn btn-primary w-100" onclick="restart()">
-                  <span class="material-symbols-outlined">play_arrow</span>
-                  攻守を更新
-                </button>
-                <button type="button" class="btn btn-secondary w-100" onclick="config()">
-                  <span class="material-symbols-outlined">restart_alt</span>
-                  盤面リセット
-                </button>
-                <input type="hidden" name="ana_role" value="AttackAI" />
-                <button type="button" class="btn btn-outline-light w-100" onclick="analysis()">
-                  <span class="material-symbols-outlined">monitoring</span>
-                  解析（評価値表示）
-                </button>
-              </div>
-            </form>
-          </section>
-
-          <section class="glass-panel progress-card" aria-labelledby="progressTitle">
-            <header class="panel-header">
-              <span class="eyebrow">Scoreboard</span>
-              <h2 id="progressTitle">勝敗メーター</h2>
-            </header>
-            <div class="progress scoreboard-progress">
-              <div
-                id="attack_win_num"
-                class="progress-bar bg-progress-attack"
-                role="progressbar"
-                style="width: 50%"
-                aria-valuenow="0"
-                aria-valuemin="0"
-                aria-valuemax="100"
-              >
-                攻め手　0 回
-              </div>
-              <div
-                id="defense_win_num"
-                class="progress-bar bg-progress-defense"
-                role="progressbar"
-                style="width: 50%"
-                aria-valuenow="0"
-                aria-valuemin="0"
-                aria-valuemax="100"
-              >
-                守り手　0 回
-              </div>
-            </div>
-          </section>
-
-          <section class="glass-panel chat-panel" aria-labelledby="chatPanelTitle">
-            <header class="panel-header">
-              <span class="eyebrow">AI Conversation</span>
-              <h2 id="chatPanelTitle">AIに相談する</h2>
-            </header>
-            <div id="chat-box"></div>
-            <div id="loadingIndicator" class="chat-loading" style="display: none;">読み込み中...</div>
-            <textarea
-              id="input-field"
-              class="form-control"
-              rows="5"
-              placeholder="戦術の疑問や分析のリクエストを入力"
-            ></textarea>
-            <button type="button" class="btn btn-primary w-100" onclick="sendChat()">
-              <span class="material-symbols-outlined">mic</span>
-              話しかける
-            </button>
-          </section>
-
-          <section class="glass-panel config-panel" aria-labelledby="configTitle">
-            <header class="panel-header">
-              <span class="eyebrow">Environment</span>
-              <h2 id="configTitle">盤面コンフィグ</h2>
-            </header>
-            <form name="ConfigForm" class="control-form">
-              <div class="form-grid form-grid--compact">
-                <div class="form-field">
-                  <label for="boardsize">盤面サイズ</label>
-                  <select name="boardsize" id="boardsize" class="form-select">
-                    <option value="8">8×8</option>
-                    <option value="12">12×12</option>
-                    <option value="16">16×16</option>
-                    <option value="20" selected="selected">20×20</option>
-                  </select>
-                </div>
-                <div class="form-field">
-                  <label for="tag_num">タグの回数</label>
-                  <select name="tag_num" id="tag_num" class="form-select">
-                    <option value="1">1回</option>
-                    <option value="2">2回</option>
-                    <option value="3">3回</option>
-                    <option value="4" selected="selected">4回</option>
-                    <option value="5">5回</option>
-                  </select>
-                </div>
-                <div class="form-field">
-                  <label for="attackNum">攻め手人数</label>
-                  <select name="attackNum" id="attackNum" class="form-select">
-                    <option value="1">1人</option>
-                    <option value="2">2人</option>
-                    <option value="3">3人</option>
-                    <option value="4">4人</option>
-                    <option value="5" selected="selected">5人</option>
-                  </select>
-                </div>
-                <div class="form-field">
-                  <label for="defenseNum">守り手人数</label>
-                  <select name="defenseNum" id="defenseNum" class="form-select">
-                    <option value="1">1人</option>
-                    <option value="2">2人</option>
-                    <option value="3">3人</option>
-                    <option value="4">4人</option>
-                    <option value="5" selected="selected">5人</option>
-                  </select>
-                </div>
-              </div>
-              <div class="control-actions mt-3">
-                <button type="button" class="btn btn-outline-light w-100" onclick="config()">
-                  <span class="material-symbols-outlined">settings</span>
-                  設定を反映
-                </button>
-              </div>
-            </form>
-          </section>
-
-          <section class="glass-panel sample-panel" aria-labelledby="sampleTitle">
-            <header class="panel-header">
-              <span class="eyebrow">Scenario Presets</span>
-              <h2 id="sampleTitle">サンプル読み込み</h2>
-            </header>
-            <form name="SampleForm" class="control-form">
-              <div class="form-grid form-grid--compact">
-                <div class="form-field form-field--wide">
-                  <label for="samplenum">サンプル</label>
-                  <select name="samplenum" id="samplenum" class="form-select">
-                    <option value="1">1対1 (1)</option>
-                    <option value="2">1対1 (2)</option>
-                    <option value="3">1対1 (3)</option>
-                    <option value="4">2対2 (1)</option>
-                    <option value="5">2対2 (2)</option>
-                    <option value="6">2対2 (3)</option>
-                  </select>
-                </div>
-              </div>
-              <div class="control-actions mt-3">
-                <button type="button" class="btn btn-primary w-100" onclick="sampleset()">
-                  <span class="material-symbols-outlined">file_download</span>
-                  読み込み
-                </button>
-              </div>
-            </form>
-          </section>
         </div>
       </div>
     </main>
@@ -494,13 +496,8 @@
       window.attackEditor = editor;
       window.editor = editor;
 
-      let pos_editor = CodeMirror.fromTextArea(document.CodingForm.initial_pos, {
-        lineNumbers: true,
-        mode: "javascript",
-        theme: "eclipse",
-      });
-      pos_editor.setValue(loadpos());
-      window.pos_editor = pos_editor;
+      // CodeMirrorエディタは削除（ドラッグ&ドロップ編集に移行）
+      // pos_editorは使用しなくなったため、undefinedのまま
 
       function loadpos() {
         let xmlHttp = new XMLHttpRequest();

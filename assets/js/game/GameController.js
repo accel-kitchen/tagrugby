@@ -85,16 +85,11 @@ export class GameController {
 			}
 		}
 
-		console.log('[GameController.humanTurn] called with', {x, y});
-		console.log('[GameController.humanTurn] window.BOARDSIZE:', typeof window !== 'undefined' ? window.BOARDSIZE : 'N/A');
-		console.log('[GameController.humanTurn] GameConfig.BoardConfig.BOARDSIZE:', GameConfig.BoardConfig.BOARDSIZE);
-		
 		if (this.select == 0 && this.turn == 1) {
 			this.step += 1;
 		}
 		// window.BOARDSIZEが設定されている場合はそれを使用、なければGameConfig.BoardConfig.BOARDSIZEを使用
 		const boardsize = (typeof window !== 'undefined' && window.BOARDSIZE !== undefined) ? window.BOARDSIZE : GameConfig.BoardConfig.BOARDSIZE;
-		console.log('[GameController.humanTurn] using boardsize:', boardsize, '(window.BOARDSIZE:', typeof window !== 'undefined' ? window.BOARDSIZE : 'N/A', ')');
 		const movablelist = getMovableList(
 			copyArray(this.pos),
 			this.turn,
@@ -108,9 +103,6 @@ export class GameController {
 			this.select,
 			this.ball
 		);
-		
-		console.log('[GameController.humanTurn] movablelist', movablelist, 'passlist', passlist);
-		console.log('[GameController.humanTurn] checking if', [x, y], 'is in movablelist or passlist');
 
 		// 一回休みの場合の処理
 		if (this.select == this.wait) {
@@ -125,7 +117,10 @@ export class GameController {
 		}
 		// 動ける場所がない場合の処理
 		else if (movablelist.length == 0 && passlist.length == 0) {
-			document.getElementById("pass").innerHTML = "動けるところがないので1回休み";
+			const passElement = document.getElementById("pass");
+			if (passElement) {
+				passElement.innerHTML = "動けるところがないので1回休み";
+			}
 			[this.select, this.turn, this.tagged] = stepPhase(
 				this.select,
 				this.pos,
@@ -175,7 +170,10 @@ export class GameController {
 						// パス可能な相手がいない場合は1回休み
 						if (passlistAfterTag.length == 0) {
 							this.wait = this.ball;
-							document.getElementById("pass").innerHTML = "パスする相手がいないので1回休み";
+							const passElement = document.getElementById("pass");
+							if (passElement) {
+								passElement.innerHTML = "パスする相手がいないので1回休み";
+							}
 						}
 						if (drawFunc) {
 							drawFunc();
@@ -229,7 +227,10 @@ export class GameController {
 						// パス可能な相手がいない場合は1回休み
 						if (passlistAfterTag.length == 0) {
 							this.wait = this.ball;
-							document.getElementById("pass").innerHTML = "パスする相手がいないので1回休み";
+							const passElement = document.getElementById("pass");
+							if (passElement) {
+								passElement.innerHTML = "パスする相手がいないので1回休み";
+							}
 						}
 						if (drawFunc) {
 							drawFunc();
@@ -278,7 +279,10 @@ export class GameController {
 					// パス可能な相手がいない場合は1回休み
 					if (passlistAfterTag.length == 0) {
 						this.wait = this.ball;
-						document.getElementById("pass").innerHTML = "パスする相手がいないので1回休み";
+						const passElement = document.getElementById("pass");
+						if (passElement) {
+							passElement.innerHTML = "パスする相手がいないので1回休み";
+						}
 						if (drawFunc) {
 							drawFunc();
 						}
@@ -740,7 +744,10 @@ export class GameController {
 						// パス可能な相手がいない場合は1回休み
 						if (passlistAfterTag.length == 0) {
 							this.wait = this.ball;
-							document.getElementById("pass").innerHTML = "パスする相手がいないので1回休み";
+							const passElement = document.getElementById("pass");
+							if (passElement) {
+								passElement.innerHTML = "パスする相手がいないので1回休み";
+							}
 						}
 						if (drawFunc) {
 							drawFunc();
@@ -792,7 +799,10 @@ export class GameController {
 						// パス可能な相手がいない場合は1回休み
 						if (passlistAfterTag.length == 0) {
 							this.wait = this.ball;
-							document.getElementById("pass").innerHTML = "パスする相手がいないので1回休み";
+							const passElement = document.getElementById("pass");
+							if (passElement) {
+								passElement.innerHTML = "パスする相手がいないので1回休み";
+							}
 						}
 						if (drawFunc) {
 							drawFunc();
@@ -839,7 +849,10 @@ export class GameController {
 					// パス可能な相手がいない場合は1回休み
 					if (passlistAfterTag.length == 0) {
 						this.wait = this.ball;
-						document.getElementById("pass").innerHTML = "パスする相手がいないので1回休み";
+						const passElement = document.getElementById("pass");
+						if (passElement) {
+							passElement.innerHTML = "パスする相手がいないので1回休み";
+						}
 					}
 					if (drawFunc) {
 						drawFunc();

@@ -35,6 +35,11 @@ export class AppState {
 		this.canvas = null;
 		this.ctx = null;
 		this.renderer = null;
+
+		// 初期配置編集モード
+		this.positionEditMode = false;
+		this.editingPOSATTACK = [];
+		this.editingPOSDEFENSE = [];
 	}
 
 	/**

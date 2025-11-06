@@ -433,8 +433,10 @@ class Game {
     }
     //動ける場所がない場合の処理
     else if (movablelist.length == 0 && passlist.length == 0) {
-      document.getElementById("pass").innerHTML =
-        "動けるところがないので1回休み";
+      const passElement = document.getElementById("pass");
+      if (passElement) {
+        passElement.innerHTML = "動けるところがないので1回休み";
+      }
       [this.select, this.turn, this.tagged] = stepPhaseFunc(
         this.select,
         this.pos,
@@ -927,7 +929,10 @@ function rematch() {
 }
 
 function rematchInit() {
-  document.getElementById("result").innerHTML = "";
+  const resultElement = document.getElementById("result");
+  if (resultElement) {
+    resultElement.innerHTML = "";
+  }
   AIthinkFlag = 0;
   game.turn = 1;
   game.pos[0] = POSDEFENSE.copy();
@@ -958,7 +963,6 @@ function config() {
     document.getElementById("poserror").innerHTML =
       "初期位置の書き方が正しくありません。" + err;
   }
-  console.log("num", attack_num, defense_num);
   CATCH_PROBABILITY_LIST = [1, 1, 1, 1, 1, 0.8, 0.8, 0.6, 0.6, 0.4, 0.4];
   POSATTACK = POSATTACK.slice(0, attack_num);
   POSDEFENSE = POSDEFENSE.slice(0, defense_num);
@@ -1591,10 +1595,16 @@ function check_func(dis_defense_arr) {
 
 function try_catch(ball, catcher, x1, y1, x2, y2, wait) {
   if (prob_judge(catch_prob(x1, y1, x2, y2))) {
-    document.getElementById("pass").innerHTML = "パス成功！";
+    const passElement = document.getElementById("pass");
+    if (passElement) {
+      passElement.innerHTML = "パス成功！";
+    }
   } else {
     wait = catcher;
-    document.getElementById("pass").innerHTML = "パス失敗！";
+    const passElement = document.getElementById("pass");
+    if (passElement) {
+      passElement.innerHTML = "パス失敗！";
+    }
   }
   return wait;
 }

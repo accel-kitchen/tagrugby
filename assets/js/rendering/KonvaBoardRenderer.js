@@ -73,6 +73,9 @@ export class KonvaBoardRenderer {
 		this.actionList = null;
 		this.movableList = null;
 		
+		// 初期配置編集モード
+		this.positionEditor = null;
+		
 		// ボール画像の読み込み
 		this.ballImageObj = null;
 		this.loadBallImage();
@@ -211,7 +214,7 @@ export class KonvaBoardRenderer {
 		
 		// 全描画が必要な場合（初期描画、サイズ変更、全要素更新）
 		if (this.needsFullRedraw || !hasAnimations) {
-			// すべてのレイヤーをクリア
+			// すべてのレイヤーをクリア（編集モード中でも一度クリアして再描画）
 			this.backgroundLayer.destroyChildren();
 			this.gridLayer.destroyChildren();
 			this.labelsLayer.destroyChildren();
@@ -246,13 +249,17 @@ export class KonvaBoardRenderer {
 				this.staticCacheValid = true;
 			}
 			
-			// 可動範囲の表示
-			this.drawMovableIndicators();
+			// 可動範囲の表示（編集モード中は非表示）
+			if (!(this.appState && this.appState.positionEditMode)) {
+				this.drawMovableIndicators();
+			}
 			
-			// 選択ハイライトの描画
-			this.drawSelectHighlight();
+			// 選択ハイライトの描画（編集モード中は非表示）
+			if (!(this.appState && this.appState.positionEditMode)) {
+				this.drawSelectHighlight();
+			}
 			
-			// プレイヤーの描画
+			// プレイヤーの描画（編集モード中でも必ず描画）
 			this.drawPlayers();
 			
 			// ボールの描画
@@ -270,21 +277,28 @@ export class KonvaBoardRenderer {
 			this.needsFullRedraw = false;
 		} else {
 			// アニメーション中は動的要素のみ更新
-			// プレイヤーとボールのレイヤーのみクリア
-			this.piecesLayer.destroyChildren();
-			// UIレイヤーは選択ハイライト、可動範囲、フィードバックを再描画するためクリア
-			this.uiLayer.destroyChildren();
-			
-			// 動的要素のみ再描画（静的要素はキャッシュから再利用）
-			this.drawSelectHighlight();
-			this.drawMovableIndicators();
-			this.drawPlayers();
-			this.drawBall();
-			this.drawTagEffect();
-			this.drawFeedbackEffects();
-			
-			// 解析評価値の描画
-			this.drawAnalysisValues();
+			// 編集モード中は全要素を再描画（コマの位置が変わる可能性があるため）
+			if (this.appState && this.appState.positionEditMode) {
+				// 編集モード中は全描画と同様に処理（ただし可動範囲と選択ハイライトは非表示）
+				this.piecesLayer.destroyChildren();
+				this.uiLayer.destroyChildren();
+				this.drawPlayers();
+				this.drawBall();
+				this.drawTagEffect();
+				this.drawFeedbackEffects();
+				this.drawAnalysisValues();
+			} else {
+				// 通常のアニメーション中は動的要素のみ更新
+				this.piecesLayer.destroyChildren();
+				this.uiLayer.destroyChildren();
+				this.drawSelectHighlight();
+				this.drawMovableIndicators();
+				this.drawPlayers();
+				this.drawBall();
+				this.drawTagEffect();
+				this.drawFeedbackEffects();
+				this.drawAnalysisValues();
+			}
 		}
 		
 		// バッチ描画で最適化
@@ -486,17 +500,27 @@ export class KonvaBoardRenderer {
 	 * プレイヤーを描画
 	 */
 	drawPlayers() {
+		// 編集モードの場合は編集中の位置を使用
+		let positionsToUse = null;
+		if (this.appState && this.appState.positionEditMode && this.positionEditor) {
+			positionsToUse = {
+				0: this.positionEditor.editingPositions.defense,
+				1: this.positionEditor.editingPositions.attack
+			};
+		}
+
 		for (let i = 0; i <= 1; i++) {
-			for (let j = 0; j < this.gameState.pos[i].length; j++) {
-				// アニメーション中の位置を取得
-				const animPos = this.animationManager.getMovePosition(i, j);
+			const posArray = positionsToUse ? positionsToUse[i] : this.gameState.pos[i];
+			for (let j = 0; j < posArray.length; j++) {
+				// アニメーション中の位置を取得（編集モードではアニメーションをスキップ）
+				const animPos = (this.appState && this.appState.positionEditMode) ? null : this.animationManager.getMovePosition(i, j);
 				let posX, posY;
 				if (animPos) {
 					posX = animPos.x;
 					posY = animPos.y;
 				} else {
-					posX = this.gameState.pos[i][j][0];
-					posY = this.gameState.pos[i][j][1];
+					posX = posArray[j][0];
+					posY = posArray[j][1];
 				}
 
 				const centerX = posX * this.BLOCKSIZE + this.BLOCKSIZE * 0.5 + this.NUMSIZE;
@@ -529,6 +553,14 @@ export class KonvaBoardRenderer {
 					stroke: strokeColor,
 					strokeWidth: 2,
 				});
+
+				// 編集モードの場合はドラッグ可能にする（ボールを持っている選手も含む）
+				if (this.appState && this.appState.positionEditMode) {
+					playerCircle.draggable(true);
+					playerCircle.name('position-editor-piece');
+					playerCircle.setAttr('pieceType', i === 0 ? 'defense' : 'attack');
+					playerCircle.setAttr('pieceIndex', j);
+				}
 				
 				this.playerCircles.push(playerCircle);
 				this.piecesLayer.add(playerCircle);
@@ -540,6 +572,11 @@ export class KonvaBoardRenderer {
 	 * ボールを描画
 	 */
 	drawBall() {
+		// 編集モードではボールを描画しない（プレイヤーをドラッグできるようにするため）
+		if (this.appState && this.appState.positionEditMode) {
+			return;
+		}
+
 		// パスアニメーション中かチェック
 		const passPos = this.animationManager.getPassPosition();
 		let ballX, ballY, ballZ = 0;
@@ -848,6 +885,41 @@ export class KonvaBoardRenderer {
 	 */
 	getStage() {
 		return this.stage;
+	}
+
+	/**
+	 * 初期配置編集モードを有効化
+	 */
+	enablePositionEditMode() {
+		if (!this.appState) {
+			console.warn('[KonvaBoardRenderer] appState not available');
+			return;
+		}
+		
+		// PositionEditorをインポートして初期化
+		import('../editing/PositionEditor.js').then(({ PositionEditor }) => {
+			this.positionEditor = new PositionEditor(this, this.appState);
+			this.positionEditor.enable();
+			this.needsFullRedraw = true;
+			this.draw();
+		}).catch(err => {
+			console.error('[KonvaBoardRenderer] Failed to load PositionEditor:', err);
+		});
+	}
+
+	/**
+	 * 初期配置編集モードを無効化
+	 */
+	disablePositionEditMode() {
+		if (this.positionEditor) {
+			this.positionEditor.disable();
+			this.positionEditor = null;
+		}
+		if (this.appState) {
+			this.appState.positionEditMode = false;
+		}
+		this.needsFullRedraw = true;
+		this.draw();
 	}
 }
 

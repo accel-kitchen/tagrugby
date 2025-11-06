@@ -151,7 +151,10 @@ function init() {
  * リマッチ初期化
  */
 function rematchInit() {
-	document.getElementById("result").innerHTML = "";
+	const resultElement = document.getElementById("result");
+	if (resultElement) {
+		resultElement.innerHTML = "";
+	}
 	AIthinkFlag = 0;
 	game.turn = 1;
 	game.pos[0] = window.POSDEFENSE.copy();
