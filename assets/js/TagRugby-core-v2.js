@@ -963,7 +963,6 @@ function restart() {
  */
 function sampleset() {
 	const sample_num = parseInt(document.SampleForm.samplenum.value);
-	console.log('[sampleset] called, setting BOARDSIZE to:', window.sample[sample_num].boardsize, 'from', window.BOARDSIZE);
 	window.BOARDSIZE = window.sample[sample_num].boardsize;
 	window.POSATTACK = window.sample[sample_num].attackpos;
 	window.POSDEFENSE = window.sample[sample_num].defensepos;
@@ -971,15 +970,11 @@ function sampleset() {
 	// サンプルテストのときは残りタグを1に設定
 	window.MAXTAG = 1;
 	
-	console.log('[sampleset] calling rematchInit first');
 	rematchInit();
-	console.log('[sampleset] after rematchInit, BOARDSIZE:', window.BOARDSIZE);
 	
-	console.log('[sampleset] calling canvas_resize after rematchInit');
 	// キャンバスサイズを再計算して反映（rematchInitの後に呼ぶ）
 	if (typeof canvas_resize === 'function') {
 		canvas_resize();
-		console.log('[sampleset] after canvas_resize, BOARDSIZE:', window.BOARDSIZE);
 	} else {
 		console.warn('[sampleset] canvas_resize function not found');
 	}
