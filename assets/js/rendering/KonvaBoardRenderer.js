@@ -859,7 +859,6 @@ export class KonvaBoardRenderer {
 	getBlockPositionFromEvent(event) {
 		const pointerPos = this.stage.getPointerPosition();
 		if (!pointerPos) {
-			console.log('[getBlockPositionFromEvent] No pointer position');
 			return { x: -1, y: -1 };
 		}
 		
@@ -869,19 +868,9 @@ export class KonvaBoardRenderer {
 		const mouseBlockX = Math.floor((mouseX - this.NUMSIZE - 0.5) / this.BLOCKSIZE);
 		const mouseBlockY = Math.floor((mouseY - this.NUMSIZE - 0.5) / this.BLOCKSIZE);
 		
-		console.log('[getBlockPositionFromEvent] Coordinate conversion:', {
-			pointerPos: { x: mouseX, y: mouseY },
-			NUMSIZE: this.NUMSIZE,
-			BLOCKSIZE: this.BLOCKSIZE,
-			BOARDSIZE: this.BOARDSIZE,
-			calculated: { x: mouseBlockX, y: mouseBlockY },
-			stageSize: { width: this.stage.width(), height: this.stage.height() }
-		});
-		
 		// 境界チェック
 		if (mouseBlockX < 0 || mouseBlockX >= this.BOARDSIZE ||
 			mouseBlockY < 0 || mouseBlockY >= this.BOARDSIZE) {
-			console.log('[getBlockPositionFromEvent] Out of bounds');
 			return { x: -1, y: -1 };
 		}
 		
