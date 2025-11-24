@@ -77,11 +77,14 @@ $useResponsesEndpoint = in_array($model, $responsesModels, true);
 
 if ($useResponsesEndpoint) {
 	$input = array_map(static function (array $message): array {
+		// assistantロールのメッセージ（会話履歴）にはoutput_textを使用
+		// userとsystemロールのメッセージにはinput_textを使用
+		$contentType = ($message['role'] === 'assistant') ? 'output_text' : 'input_text';
 		return [
 			'role' => $message['role'],
 			'content' => [
 				[
-					'type' => 'input_text',
+					'type' => $contentType,
 					'text' => $message['content'],
 				],
 			],

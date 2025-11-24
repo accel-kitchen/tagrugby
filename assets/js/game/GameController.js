@@ -15,6 +15,22 @@ import { rugby_AI } from '../ai/AIRegistry.js';
 import { GameConfig } from '../config/GameConfig.js';
 
 /**
+ * AIthinkFlagを同期させるヘルパー関数
+ * appState.AIthinkFlagとグローバルAIthinkFlagを同期させる
+ * @param {Object} appState - アプリケーション状態
+ * @param {number} value - 設定する値（0または1）
+ */
+function syncAIthinkFlag(appState, value) {
+	if (appState) {
+		appState.AIthinkFlag = value;
+	}
+	// グローバル変数も同期（window経由でアクセス可能な場合）
+	if (typeof window !== 'undefined' && typeof window.AIthinkFlag !== 'undefined') {
+		window.AIthinkFlag = value;
+	}
+}
+
+/**
  * ゲームを制御するクラス
  * 既存のGameクラスとの互換性を保つ
  */
@@ -103,6 +119,10 @@ export class GameController {
 			this.select,
 			this.ball
 		);
+		
+		// クリックした位置が移動可能な位置に含まれているかチェック
+		const isInMovableList = movablelist.some(pos => pos[0] === x && pos[1] === y);
+		const isInPassList = passlist.some(pos => pos[0] === x && pos[1] === y);
 
 		// 一回休みの場合の処理
 		if (this.select == this.wait) {
@@ -135,187 +155,57 @@ export class GameController {
 				gameOverFunc(-1, x, y);
 				return;
 			} else {
-				// タグアニメーションを開始
-				let rendererToUse = appState?.renderer;
-				if (!rendererToUse && typeof window !== 'undefined' && window.renderer) {
-					rendererToUse = window.renderer;
+				// アニメーションなしで即座に処理
+				this.tag -= 1;
+				this.tagged = 1;
+				this.tagged_disp = 1;
+				let tag = "";
+				for (let i = 0; i < this.tag; i++) {
+					tag += GameConfig.TAG_IMG;
 				}
-				if (appState && rendererToUse && rendererToUse.animationManager) {
-					const animationManager = rendererToUse.animationManager;
-					// 超高速の場合はアニメーションをスキップ
-					if (animationManager.speedMultiplier === 0) {
-						// アニメーションなしで即座に処理
-						this.tag -= 1;
-						this.tagged = 1;
-						this.tagged_disp = 1;
-						let tag = "";
-						for (let i = 0; i < this.tag; i++) {
-							tag += GameConfig.TAG_IMG;
-						}
-						document.getElementById("tag").innerHTML = tag;
-						[this.select, this.turn, this.tagged] = taggedStepPhase(
-							this.select,
-							this.pos,
-							this.turn,
-							this.ball,
-							this.tagged
-						);
-						// タグされた後、パス可能な相手がいるかチェック
-						const passlistAfterTag = getPassList(
-							copyArray(this.pos),
-							this.turn,
-							this.select,
-							this.ball
-						);
-						// パス可能な相手がいない場合は1回休み
-						if (passlistAfterTag.length == 0) {
-							this.wait = this.ball;
-							const passElement = document.getElementById("pass");
-							if (passElement) {
-								passElement.innerHTML = "パスする相手がいないので1回休み";
-							}
-						}
-						if (drawFunc) {
-							drawFunc();
-						}
-						// 次のターン処理
-						if (this.Role[arrayTurn(this.turn)] != "human") {
-							if (appState) {
-								appState.AIthinkFlag = 1;
-								const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
-									? window.DELAYDURATION 
-									: GameConfig.TimingConfig.DELAYDURATION;
-								setTimeout(() => {
-									this.AIturn(drawFunc, gameOverFunc, appState, appState.Role);
-								}, delayDuration);
-							}
-						}
-						return;
+				document.getElementById("tag").innerHTML = tag;
+				[this.select, this.turn, this.tagged] = taggedStepPhase(
+					this.select,
+					this.pos,
+					this.turn,
+					this.ball,
+					this.tagged
+				);
+				// タグされた後、パス可能な相手がいるかチェック
+				const passlistAfterTag = getPassList(
+					copyArray(this.pos),
+					this.turn,
+					this.select,
+					this.ball
+				);
+				// パス可能な相手がいない場合は1回休み
+				if (passlistAfterTag.length == 0) {
+					this.wait = this.ball;
+					const passElement = document.getElementById("pass");
+					if (passElement) {
+						passElement.innerHTML = "パスする相手がいないので1回休み";
 					}
-					// タグ位置の座標を取得（タグされたプレイヤーの位置）
-					const taggedPlayerX = this.pos[arrayTurn(this.turn)][this.select][0];
-					const taggedPlayerY = this.pos[arrayTurn(this.turn)][this.select][1];
-					animationManager.startTagAnimation(x, y, () => {
-						if (drawFunc) {
-							drawFunc();
-						}
-						// タグ取得のフィードバックエフェクトを表示（1秒停止 + 1秒フェードアウト）
-						animationManager.startFeedbackEffect(taggedPlayerX, taggedPlayerY, "タグ！", "#FF6600", 2000);
-						// アニメーション完了後の処理
-						this.tag -= 1;
-						this.tagged = 1;
-						this.tagged_disp = 1;
-						let tag = "";
-						for (let i = 0; i < this.tag; i++) {
-							tag += GameConfig.TAG_IMG;
-						}
-						document.getElementById("tag").innerHTML = tag;
-						[this.select, this.turn, this.tagged] = taggedStepPhase(
-							this.select,
-							this.pos,
-							this.turn,
-							this.ball,
-							this.tagged
-						);
-						// タグされた後、パス可能な相手がいるかチェック
-						const passlistAfterTag = getPassList(
-							copyArray(this.pos),
-							this.turn,
-							this.select,
-							this.ball
-						);
-						// パス可能な相手がいない場合は1回休み
-						if (passlistAfterTag.length == 0) {
-							this.wait = this.ball;
-							const passElement = document.getElementById("pass");
-							if (passElement) {
-								passElement.innerHTML = "パスする相手がいないので1回休み";
-							}
-						}
-						if (drawFunc) {
-							drawFunc();
-						}
-						// 次のターン処理
-						if (this.Role[arrayTurn(this.turn)] != "human") {
-							if (appState) {
-								appState.AIthinkFlag = 1;
-								const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
-									? window.DELAYDURATION 
-									: GameConfig.TimingConfig.DELAYDURATION;
-								setTimeout(() => {
-									this.AIturn(drawFunc, gameOverFunc, appState, appState.Role);
-								}, delayDuration);
-							}
-						}
-					});
-					// アニメーション開始直後に描画を開始
-					if (drawFunc) {
-						drawFunc(); // 即座に描画
+				}
+				if (drawFunc) {
+					drawFunc();
+				}
+				// 次のターン処理
+				if (this.Role[arrayTurn(this.turn)] != "human") {
+					if (appState) {
+						syncAIthinkFlag(appState, 1);
+						const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
+							? window.DELAYDURATION 
+							: GameConfig.TimingConfig.DELAYDURATION;
+						setTimeout(() => {
+							this.AIturn(drawFunc, gameOverFunc, appState, this.Role);
+						}, delayDuration);
 					}
 				} else {
-					// アニメーションなしの場合
-					this.tag -= 1;
-					this.tagged = 1;
-					this.tagged_disp = 1;
-					let tag = "";
-					for (let i = 0; i < this.tag; i++) {
-						tag += GameConfig.TAG_IMG;
-					}
-					document.getElementById("tag").innerHTML = tag;
-					[this.select, this.turn, this.tagged] = taggedStepPhase(
-						this.select,
-						this.pos,
-						this.turn,
-						this.ball,
-						this.tagged
-					);
-					// タグされた後、パス可能な相手がいるかチェック
-					const passlistAfterTag = getPassList(
-						copyArray(this.pos),
-						this.turn,
-						this.select,
-						this.ball
-					);
-					// パス可能な相手がいない場合は1回休み
-					if (passlistAfterTag.length == 0) {
-						this.wait = this.ball;
-						const passElement = document.getElementById("pass");
-						if (passElement) {
-							passElement.innerHTML = "パスする相手がいないので1回休み";
-						}
-						if (drawFunc) {
-							drawFunc();
-						}
-						// 次のターン処理
-						if (this.Role[arrayTurn(this.turn)] != "human") {
-							if (appState) {
-								appState.AIthinkFlag = 1;
-								const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
-									? window.DELAYDURATION 
-									: GameConfig.TimingConfig.DELAYDURATION;
-								setTimeout(() => {
-									this.AIturn(drawFunc, gameOverFunc, appState, appState.Role);
-								}, delayDuration);
-							}
-						}
-					} else {
-						if (drawFunc) {
-							drawFunc();
-						}
-						// 次のターン処理
-						if (this.Role[arrayTurn(this.turn)] != "human") {
-							if (appState) {
-								appState.AIthinkFlag = 1;
-								const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
-									? window.DELAYDURATION 
-									: GameConfig.TimingConfig.DELAYDURATION;
-								setTimeout(() => {
-									this.AIturn(drawFunc, gameOverFunc, appState, appState.Role);
-								}, delayDuration);
-							}
-						}
+					if (appState) {
+						syncAIthinkFlag(appState, 0);
 					}
 				}
+				return;
 			}
 		} else {
 			const catchableResult = catchable(this.pos, this.turn, this.select, this.ball, x, y);
@@ -326,236 +216,106 @@ export class GameController {
 				const toX = this.pos[arrayTurn(this.turn)][catchableResult][0];
 				const toY = this.pos[arrayTurn(this.turn)][catchableResult][1];
 				
-				// パスアニメーションを開始
+				// アニメーションなしで即座に処理
+				let animationManager = null;
 				let rendererToUse = appState?.renderer;
 				if (!rendererToUse && typeof window !== 'undefined' && window.renderer) {
 					rendererToUse = window.renderer;
 				}
 				if (appState && rendererToUse && rendererToUse.animationManager) {
-					const animationManager = rendererToUse.animationManager;
-					// 超高速の場合はアニメーションをスキップ
-					if (animationManager.speedMultiplier === 0) {
-						// アニメーションなしで即座に処理
-						this.wait = tryCatch(
-							this.ball,
-							catchableResult,
-							x,
-							y,
-							fromX,
-							fromY,
-							this.wait,
-							animationManager
-						);
-						this.ball = catchableResult;
-						[this.select, this.turn, this.tagged] = stepPhase(
-							this.select,
-							this.pos,
-							this.turn,
-							this.ball,
-							this.tagged
-						);
-						if (drawFunc) {
-							drawFunc();
-						}
-						// 次のターン処理
-						if (this.Role[arrayTurn(this.turn)] != "human") {
-							if (appState) {
-								appState.AIthinkFlag = 1;
-								const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
-									? window.DELAYDURATION 
-									: GameConfig.TimingConfig.DELAYDURATION;
-								setTimeout(() => {
-									this.AIturn(drawFunc, gameOverFunc, appState, appState.Role);
-								}, delayDuration);
-							}
-						}
-						return;
-					}
-					animationManager.startPassAnimation(fromX, fromY, toX, toY, () => {
-						// アニメーション完了後の処理
-						this.wait = tryCatch(
-							this.ball,
-							catchableResult,
-							x,
-							y,
-							fromX,
-							fromY,
-							this.wait,
-							animationManager
-						);
-						this.ball = catchableResult;
-						[this.select, this.turn, this.tagged] = stepPhase(
-							this.select,
-							this.pos,
-							this.turn,
-							this.ball,
-							this.tagged
-						);
-						if (drawFunc) {
-							drawFunc();
-						}
-						// 次のターン処理
-						if (this.Role[arrayTurn(this.turn)] != "human") {
-							if (appState) {
-								appState.AIthinkFlag = 1;
-								const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
-									? window.DELAYDURATION 
-									: GameConfig.TimingConfig.DELAYDURATION;
-								setTimeout(() => {
-									this.AIturn(drawFunc, gameOverFunc, appState, appState.Role);
-								}, delayDuration);
-							}
-						}
-					});
-					// アニメーション開始直後に描画を開始
-					if (drawFunc) {
-						drawFunc(); // 即座に描画
+					animationManager = rendererToUse.animationManager;
+				}
+				this.wait = tryCatch(
+					this.ball,
+					catchableResult,
+					x,
+					y,
+					fromX,
+					fromY,
+					this.wait,
+					animationManager
+				);
+				this.ball = catchableResult;
+				[this.select, this.turn, this.tagged] = stepPhase(
+					this.select,
+					this.pos,
+					this.turn,
+					this.ball,
+					this.tagged
+				);
+				if (drawFunc) {
+					drawFunc();
+				}
+				// 次のターン処理
+				if (this.Role[arrayTurn(this.turn)] != "human") {
+					if (appState) {
+						syncAIthinkFlag(appState, 1);
+						const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
+							? window.DELAYDURATION 
+							: GameConfig.TimingConfig.DELAYDURATION;
+						setTimeout(() => {
+							this.AIturn(drawFunc, gameOverFunc, appState, this.Role);
+						}, delayDuration);
 					}
 				} else {
-					// アニメーションなしの場合
-					let animationManager = null;
-					if (appState && rendererToUse && rendererToUse.animationManager) {
-						animationManager = rendererToUse.animationManager;
+					if (appState) {
+						syncAIthinkFlag(appState, 0);
 					}
-					this.wait = tryCatch(
-						this.ball,
-						catchableResult,
-						x,
-						y,
-						fromX,
-						fromY,
-						this.wait,
-						animationManager
-					);
-					this.ball = catchableResult;
-					[this.select, this.turn, this.tagged] = stepPhase(
-						this.select,
-						this.pos,
-						this.turn,
-						this.ball,
-						this.tagged
-					);
 				}
+				return;
 			}
 			// 移動する場合の処理
 			else {
+				let moveFound = false;
 				for (let i = 0; i < movablelist.length; i++) {
-					if (x == movablelist[i][0] && y == movablelist[i][1]) {
+					const movablePos = movablelist[i];
+					if (x == movablePos[0] && y == movablePos[1]) {
+						moveFound = true;
 						const fromX = this.pos[arrayTurn(this.turn)][this.select][0];
 						const fromY = this.pos[arrayTurn(this.turn)][this.select][1];
 						const toX = x;
 						const toY = y;
 						
-						// 移動アニメーションを開始
-						// rendererを取得（優先順位: window.renderer > appState.renderer）
-						let rendererToUse = null;
-						if (typeof window !== 'undefined' && window.renderer) {
-							rendererToUse = window.renderer;
-						} else if (appState?.renderer) {
-							rendererToUse = appState.renderer;
+						// アニメーションなしで即座に処理
+						this.pos[arrayTurn(this.turn)][this.select][0] = x;
+						this.pos[arrayTurn(this.turn)][this.select][1] = y;
+						const [newSelect, newTurn, newTagged] = stepPhase(
+							this.select,
+							this.pos,
+							this.turn,
+							this.ball,
+							this.tagged
+						);
+						this.select = newSelect;
+						this.turn = newTurn;
+						this.tagged = newTagged;
+						if (drawFunc) {
+							drawFunc();
 						}
-						
-						if (appState && rendererToUse && rendererToUse.animationManager) {
-							const animationManager = rendererToUse.animationManager;
-							// 超高速の場合はアニメーションをスキップ
-							if (animationManager.speedMultiplier === 0) {
-								// アニメーションなしで即座に処理
-								this.pos[arrayTurn(this.turn)][this.select][0] = toX;
-								this.pos[arrayTurn(this.turn)][this.select][1] = toY;
-								[this.select, this.turn, this.tagged] = stepPhase(
-									this.select,
-									this.pos,
-									this.turn,
-									this.ball,
-									this.tagged
-								);
-								if (drawFunc) {
-									drawFunc();
-								}
-								// トライした場合の処理
-								if (tryJudge(this.pos, this.ball)) {
-									gameOverFunc(1, toX, toY);
-									return;
-								}
-								// 次のターン処理
-								if (this.Role[arrayTurn(this.turn)] != "human") {
-									if (appState) {
-										appState.AIthinkFlag = 1;
-										const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
-											? window.DELAYDURATION 
-											: GameConfig.TimingConfig.DELAYDURATION;
-										setTimeout(() => {
-											this.AIturn(drawFunc, gameOverFunc, appState, appState.Role);
-										}, delayDuration);
-									}
-								}
-								return;
+						// トライした場合の処理
+						if (tryJudge(this.pos, this.ball)) {
+							gameOverFunc(1, x, y);
+							return;
+						}
+						// 次のターンが人間の場合、AIthinkFlagをリセット
+						if (this.Role[arrayTurn(this.turn)] == "human") {
+							if (appState) {
+								syncAIthinkFlag(appState, 0);
 							}
-							animationManager.startMoveAnimation(
-								arrayTurn(this.turn),
-								this.select,
-								fromX,
-								fromY,
-								toX,
-								toY,
-								() => {
-									if (drawFunc) {
-										drawFunc();
-									}
-									// アニメーション完了後の処理
-									this.pos[arrayTurn(this.turn)][this.select][0] = toX;
-									this.pos[arrayTurn(this.turn)][this.select][1] = toY;
-									[this.select, this.turn, this.tagged] = stepPhase(
-										this.select,
-										this.pos,
-										this.turn,
-										this.ball,
-										this.tagged
-									);
-									if (drawFunc) {
-										drawFunc();
-									}
-									// トライした場合の処理
-									if (tryJudge(this.pos, this.ball)) {
-										gameOverFunc(1, toX, toY);
-										return;
-									}
-									// 次のターン処理
-									if (this.Role[arrayTurn(this.turn)] != "human") {
-										if (appState) {
-											appState.AIthinkFlag = 1;
-											const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
-												? window.DELAYDURATION 
-												: GameConfig.TimingConfig.DELAYDURATION;
-											setTimeout(() => {
-												this.AIturn(drawFunc, gameOverFunc, appState, appState.Role);
-											}, delayDuration);
-										}
-									}
-								}
-							);
-							// アニメーション開始直後に描画を開始（位置を更新する前に）
-							// 位置はアニメーション完了まで更新しない
-							if (drawFunc) {
-								drawFunc(); // 即座に描画
-							}
-						} else {
-							// アニメーションなしの場合
-							this.pos[arrayTurn(this.turn)][this.select][0] = x;
-							this.pos[arrayTurn(this.turn)][this.select][1] = y;
-							[this.select, this.turn, this.tagged] = stepPhase(
-								this.select,
-								this.pos,
-								this.turn,
-								this.ball,
-								this.tagged
-							);
-							// トライした場合の処理
-							if (tryJudge(this.pos, this.ball)) {
-								gameOverFunc(1, x, y);
-								return;
+						} else if (this.Role[arrayTurn(this.turn)] != "human") {
+							if (appState) {
+								syncAIthinkFlag(appState, 1);
+								const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
+									? window.DELAYDURATION 
+									: GameConfig.TimingConfig.DELAYDURATION;
+								setTimeout(() => {
+									this.AIturn(drawFunc, gameOverFunc, appState, this.Role);
+								}, delayDuration);
 							}
 						}
+						return;
+						// 移動が見つかったらループを抜ける（アニメーションありの場合は既にreturnしている）
+						break;
 					}
 				}
 			}
@@ -574,12 +334,12 @@ export class GameController {
 		if (!hasAnimation) {
 			if (this.Role[arrayTurn(this.turn)] != "human") {
 				if (appState) {
-					appState.AIthinkFlag = 1;
+					syncAIthinkFlag(appState, 1);
 					const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
 						? window.DELAYDURATION 
 						: GameConfig.TimingConfig.DELAYDURATION;
 					setTimeout(() => {
-						this.AIturn(drawFunc, gameOverFunc, appState, appState.Role);
+						this.AIturn(drawFunc, gameOverFunc, appState, this.Role);
 					}, delayDuration);
 				}
 			}
@@ -587,7 +347,6 @@ export class GameController {
 				drawFunc();
 			}
 		} else {
-			// アニメーション中は描画を開始
 			if (drawFunc) {
 				drawFunc();
 			}
@@ -657,6 +416,7 @@ export class GameController {
 		}
 
 		if (
+			!nextmove ||
 			nextmove.length == 0 ||
 			typeof nextmove[0] === "undefined" ||
 			typeof nextmove[1] === "undefined"
@@ -668,6 +428,26 @@ export class GameController {
 				this.ball,
 				this.tagged
 			);
+			console.log('[AIturn] After stepPhase (empty nextmove):', { select: this.select, turn: this.turn, tagged: this.tagged });
+			// 次のターン処理
+			if (this.Role[arrayTurn(this.turn)] != "human") {
+				if (appState) {
+					syncAIthinkFlag(appState, 1);
+					const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
+						? window.DELAYDURATION 
+						: GameConfig.TimingConfig.DELAYDURATION;
+					setTimeout(() => {
+						this.AIturn(drawFunc, gameOverFunc, appState, Role);
+					}, delayDuration);
+				}
+			}
+			if (appState) {
+						syncAIthinkFlag(appState, 0);
+			}
+			if (drawFunc) {
+				drawFunc();
+			}
+			return;
 		}
 		// 一回休みの場合の処理
 		else if (this.select == this.wait) {
@@ -679,6 +459,25 @@ export class GameController {
 				this.ball,
 				this.tagged
 			);
+			// 次のターン処理
+			if (this.Role[arrayTurn(this.turn)] != "human") {
+				if (appState) {
+					syncAIthinkFlag(appState, 1);
+					const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
+						? window.DELAYDURATION 
+						: GameConfig.TimingConfig.DELAYDURATION;
+					setTimeout(() => {
+						this.AIturn(drawFunc, gameOverFunc, appState, Role);
+					}, delayDuration);
+				}
+			}
+			if (appState) {
+				syncAIthinkFlag(appState, 0);
+			}
+			if (drawFunc) {
+				drawFunc();
+			}
+			return;
 		}
 		// 動ける場所がない場合の処理
 		else if (movablelist.length == 0 && passlist.length == 0) {
@@ -689,18 +488,36 @@ export class GameController {
 				this.ball,
 				this.tagged
 			);
+			// 次のターン処理
+			if (this.Role[arrayTurn(this.turn)] != "human") {
+				if (appState) {
+					syncAIthinkFlag(appState, 1);
+					const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
+						? window.DELAYDURATION 
+						: GameConfig.TimingConfig.DELAYDURATION;
+					setTimeout(() => {
+						this.AIturn(drawFunc, gameOverFunc, appState, Role);
+					}, delayDuration);
+				}
+			}
+			if (appState) {
+				syncAIthinkFlag(appState, 0);
+			}
+			if (drawFunc) {
+				drawFunc();
+			}
+			return;
 		}
 		// タグが取られた場合の処理
-		else if (
-			tagJudge(
-				this.select,
-				this.pos,
-				this.turn,
-				this.ball,
-				nextmove[0],
-				nextmove[1]
-			)
-		) {
+		const tagResult = tagJudge(
+			this.select,
+			this.pos,
+			this.turn,
+			this.ball,
+			nextmove[0],
+			nextmove[1]
+		);
+		if (tagResult) {
 			if (this.tag == 1) {
 				gameOverFunc(-1, nextmove[0], nextmove[1]);
 				return;
@@ -754,7 +571,7 @@ export class GameController {
 						}
 						if (this.Role[arrayTurn(this.turn)] != "human") {
 							if (appState) {
-								appState.AIthinkFlag = 1;
+								syncAIthinkFlag(appState, 1);
 								const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
 									? window.DELAYDURATION 
 									: GameConfig.TimingConfig.DELAYDURATION;
@@ -765,111 +582,58 @@ export class GameController {
 						}
 						return;
 					}
-					// タグ位置の座標を取得（タグされたプレイヤーの位置）
-					const taggedPlayerX = this.pos[arrayTurn(this.turn)][this.select][0];
-					const taggedPlayerY = this.pos[arrayTurn(this.turn)][this.select][1];
-					animationManager.startTagAnimation(nextmove[0], nextmove[1], () => {
-						if (drawFunc) {
-							drawFunc();
-						}
-						// タグ取得のフィードバックエフェクトを表示（1秒停止 + 1秒フェードアウト）
-						animationManager.startFeedbackEffect(taggedPlayerX, taggedPlayerY, "タグ！", "#FF6600", 2000);
-						this.tag -= 1;
-						this.tagged = 1;
-						this.tagged_disp = 1;
-						let tag = "";
-						for (let i = 0; i < this.tag; i++) {
-							tag += GameConfig.TAG_IMG;
-						}
-						document.getElementById("tag").innerHTML = tag;
-						[this.select, this.turn, this.tagged] = taggedStepPhase(
-							this.select,
-							this.pos,
-							this.turn,
-							this.ball,
-							this.tagged
-						);
-						// タグされた後、パス可能な相手がいるかチェック
-						const passlistAfterTag = getPassList(
-							copyArray(this.pos),
-							this.turn,
-							this.select,
-							this.ball
-						);
-						// パス可能な相手がいない場合は1回休み
-						if (passlistAfterTag.length == 0) {
-							this.wait = this.ball;
-							const passElement = document.getElementById("pass");
-							if (passElement) {
-								passElement.innerHTML = "パスする相手がいないので1回休み";
-							}
-						}
-						if (drawFunc) {
-							drawFunc();
-						}
-						if (this.Role[arrayTurn(this.turn)] != "human") {
-							if (appState) {
-								appState.AIthinkFlag = 1;
-								const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
-									? window.DELAYDURATION 
-									: GameConfig.TimingConfig.DELAYDURATION;
-								setTimeout(() => {
-									this.AIturn(drawFunc, gameOverFunc, appState, Role);
-								}, delayDuration);
-							}
-						}
-					});
-					// アニメーション開始直後に描画を開始
-					if (drawFunc) {
-						drawFunc(); // 即座に描画
-					}
-				} else {
-					this.tag -= 1;
-					this.tagged = 1;
-					this.tagged_disp = 1;
-					let tag = "";
-					for (let i = 0; i < this.tag; i++) {
-						tag += GameConfig.TAG_IMG;
-					}
-					document.getElementById("tag").innerHTML = tag;
-					[this.select, this.turn, this.tagged] = taggedStepPhase(
-						this.select,
-						this.pos,
-						this.turn,
-						this.ball,
-						this.tagged
-					);
-					// タグされた後、パス可能な相手がいるかチェック
-					const passlistAfterTag = getPassList(
-						copyArray(this.pos),
-						this.turn,
-						this.select,
-						this.ball
-					);
-					// パス可能な相手がいない場合は1回休み
-					if (passlistAfterTag.length == 0) {
-						this.wait = this.ball;
-						const passElement = document.getElementById("pass");
-						if (passElement) {
-							passElement.innerHTML = "パスする相手がいないので1回休み";
-						}
-					}
-					if (drawFunc) {
-						drawFunc();
-					}
-					// 次のターン処理
-					if (this.Role[arrayTurn(this.turn)] != "human") {
-						if (appState) {
-							appState.AIthinkFlag = 1;
-							const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
-								? window.DELAYDURATION 
-								: GameConfig.TimingConfig.DELAYDURATION;
-							setTimeout(() => {
-								this.AIturn(drawFunc, gameOverFunc, appState, Role);
-							}, delayDuration);
-						}
+				}
+				// アニメーションなしで即座に処理
+				this.tag -= 1;
+				this.tagged = 1;
+				this.tagged_disp = 1;
+				let tag = "";
+				for (let i = 0; i < this.tag; i++) {
+					tag += GameConfig.TAG_IMG;
+				}
+				document.getElementById("tag").innerHTML = tag;
+				[this.select, this.turn, this.tagged] = taggedStepPhase(
+					this.select,
+					this.pos,
+					this.turn,
+					this.ball,
+					this.tagged
+				);
+				// タグされた後、パス可能な相手がいるかチェック
+				const passlistAfterTag = getPassList(
+					copyArray(this.pos),
+					this.turn,
+					this.select,
+					this.ball
+				);
+				// パス可能な相手がいない場合は1回休み
+				if (passlistAfterTag.length == 0) {
+					this.wait = this.ball;
+					const passElement = document.getElementById("pass");
+					if (passElement) {
+						passElement.innerHTML = "パスする相手がいないので1回休み";
 					}
 				}
+				if (drawFunc) {
+					drawFunc();
+				}
+				// 次のターン処理
+				if (this.Role[arrayTurn(this.turn)] != "human") {
+					if (appState) {
+						syncAIthinkFlag(appState, 1);
+						const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
+							? window.DELAYDURATION 
+							: GameConfig.TimingConfig.DELAYDURATION;
+						setTimeout(() => {
+							this.AIturn(drawFunc, gameOverFunc, appState, Role);
+						}, delayDuration);
+					}
+				} else {
+					if (appState) {
+						syncAIthinkFlag(appState, 0);
+					}
+				}
+				return;
 			}
 		} else {
 			const catchableResult = catchable(
@@ -887,8 +651,8 @@ export class GameController {
 				const toX = this.pos[arrayTurn(this.turn)][catchableResult][0];
 				const toY = this.pos[arrayTurn(this.turn)][catchableResult][1];
 				
-				// パスアニメーションを開始
-				// rendererを取得（既に宣言されている変数を使用）
+				// アニメーションなしで即座に処理
+				let animationManager = null;
 				if (!rendererToUse) {
 					if (appState?.renderer) {
 						rendererToUse = appState.renderer;
@@ -897,106 +661,48 @@ export class GameController {
 					}
 				}
 				if (appState && rendererToUse && rendererToUse.animationManager) {
-					const animationManager = rendererToUse.animationManager;
-					// 超高速の場合はアニメーションをスキップ
-					if (animationManager.speedMultiplier === 0) {
-						// アニメーションなしで即座に処理
-						this.wait = tryCatch(
-							this.ball,
-							catchableResult,
-							nextmove[0],
-							nextmove[1],
-							fromX,
-							fromY,
-							this.wait,
-							animationManager
-						);
-						this.ball = catchableResult;
-						[this.select, this.turn, this.tagged] = stepPhase(
-							this.select,
-							this.pos,
-							this.turn,
-							this.ball,
-							this.tagged
-						);
-						if (drawFunc) {
-							drawFunc();
-						}
-						if (this.Role[arrayTurn(this.turn)] != "human") {
-							if (appState) {
-								appState.AIthinkFlag = 1;
-								const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
-									? window.DELAYDURATION 
-									: GameConfig.TimingConfig.DELAYDURATION;
-								setTimeout(() => {
-									this.AIturn(drawFunc, gameOverFunc, appState, Role);
-								}, delayDuration);
-							}
-						}
-						return;
-					}
-					animationManager.startPassAnimation(fromX, fromY, toX, toY, () => {
-						this.wait = tryCatch(
-							this.ball,
-							catchableResult,
-							nextmove[0],
-							nextmove[1],
-							fromX,
-							fromY,
-							this.wait,
-							animationManager
-						);
-						this.ball = catchableResult;
-						[this.select, this.turn, this.tagged] = stepPhase(
-							this.select,
-							this.pos,
-							this.turn,
-							this.ball,
-							this.tagged
-						);
-						if (drawFunc) {
-							drawFunc();
-						}
-						if (this.Role[arrayTurn(this.turn)] != "human") {
-							if (appState) {
-								appState.AIthinkFlag = 1;
-								const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
-									? window.DELAYDURATION 
-									: GameConfig.TimingConfig.DELAYDURATION;
-								setTimeout(() => {
-									this.AIturn(drawFunc, gameOverFunc, appState, Role);
-								}, delayDuration);
-							}
-						}
-					});
-					// アニメーション開始直後に描画を開始
-					if (drawFunc) {
-						drawFunc(); // 即座に描画
+					animationManager = rendererToUse.animationManager;
+				}
+				this.wait = tryCatch(
+					this.ball,
+					catchableResult,
+					nextmove[0],
+					nextmove[1],
+					fromX,
+					fromY,
+					this.wait,
+					animationManager
+				);
+				this.ball = catchableResult;
+				const [newSelect, newTurn, newTagged] = stepPhase(
+					this.select,
+					this.pos,
+					this.turn,
+					this.ball,
+					this.tagged
+				);
+				this.select = newSelect;
+				this.turn = newTurn;
+				this.tagged = newTagged;
+				if (drawFunc) {
+					drawFunc();
+				}
+				if (this.Role[arrayTurn(this.turn)] != "human") {
+					if (appState) {
+						syncAIthinkFlag(appState, 1);
+						const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
+							? window.DELAYDURATION 
+							: GameConfig.TimingConfig.DELAYDURATION;
+						setTimeout(() => {
+							this.AIturn(drawFunc, gameOverFunc, appState, Role);
+						}, delayDuration);
 					}
 				} else {
-					let animationManager = null;
-					if (appState && rendererToUse && rendererToUse.animationManager) {
-						animationManager = rendererToUse.animationManager;
+					if (appState) {
+						syncAIthinkFlag(appState, 0);
 					}
-					this.wait = tryCatch(
-						this.ball,
-						catchableResult,
-						nextmove[0],
-						nextmove[1],
-						fromX,
-						fromY,
-						this.wait,
-						animationManager
-					);
-					this.ball = catchableResult;
-					[this.select, this.turn, this.tagged] = stepPhase(
-						this.select,
-						this.pos,
-						this.turn,
-						this.ball,
-						this.tagged
-					);
 				}
+				return;
 			}
 			// 移動する場合の処理
 			else {
@@ -1005,103 +711,44 @@ export class GameController {
 				const toX = nextmove[0];
 				const toY = nextmove[1];
 				
-				// 移動アニメーションを開始
-				if (appState && appState.renderer && appState.renderer.animationManager) {
-					const animationManager = appState.renderer.animationManager;
-					// 超高速の場合はアニメーションをスキップ
-					if (animationManager.speedMultiplier === 0) {
-						// アニメーションなしで即座に処理
-						this.pos[arrayTurn(this.turn)][this.select][0] = toX;
-						this.pos[arrayTurn(this.turn)][this.select][1] = toY;
-						[this.select, this.turn, this.tagged] = stepPhase(
-							this.select,
-							this.pos,
-							this.turn,
-							this.ball,
-							this.tagged
-						);
-						if (drawFunc) {
-							drawFunc();
-						}
-						// トライした場合の処理
-						if (tryJudge(this.pos, this.ball)) {
-							gameOverFunc(1, toX, toY);
-							return;
-						}
-						if (this.Role[arrayTurn(this.turn)] != "human") {
-							if (appState) {
-								appState.AIthinkFlag = 1;
-								const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
-									? window.DELAYDURATION 
-									: GameConfig.TimingConfig.DELAYDURATION;
-								setTimeout(() => {
-									this.AIturn(drawFunc, gameOverFunc, appState, Role);
-								}, delayDuration);
-							}
-						}
-						return;
+				// アニメーションなしで即座に処理
+				this.pos[arrayTurn(this.turn)][this.select][0] = toX;
+				this.pos[arrayTurn(this.turn)][this.select][1] = toY;
+				const [newSelect, newTurn, newTagged] = stepPhase(
+					this.select,
+					this.pos,
+					this.turn,
+					this.ball,
+					this.tagged
+				);
+				this.select = newSelect;
+				this.turn = newTurn;
+				this.tagged = newTagged;
+				if (drawFunc) {
+					drawFunc();
+				}
+				// トライした場合の処理
+				if (tryJudge(this.pos, this.ball)) {
+					gameOverFunc(1, toX, toY);
+					return;
+				}
+				// 次のターンが人間の場合、AIthinkFlagをリセット
+				if (this.Role[arrayTurn(this.turn)] == "human") {
+					if (appState) {
+						syncAIthinkFlag(appState, 0);
 					}
-					animationManager.startMoveAnimation(
-						arrayTurn(this.turn),
-						this.select,
-						fromX,
-						fromY,
-						toX,
-						toY,
-						() => {
-							if (drawFunc) {
-								drawFunc();
-							}
-							this.pos[arrayTurn(this.turn)][this.select][0] = toX;
-							this.pos[arrayTurn(this.turn)][this.select][1] = toY;
-							[this.select, this.turn, this.tagged] = stepPhase(
-								this.select,
-								this.pos,
-								this.turn,
-								this.ball,
-								this.tagged
-							);
-							if (drawFunc) {
-								drawFunc();
-							}
-							// トライした場合の処理
-							if (tryJudge(this.pos, this.ball)) {
-								gameOverFunc(1, toX, toY);
-								return;
-							}
-							if (this.Role[arrayTurn(this.turn)] != "human") {
-								if (appState) {
-									appState.AIthinkFlag = 1;
-									const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
-										? window.DELAYDURATION 
-										: GameConfig.TimingConfig.DELAYDURATION;
-									setTimeout(() => {
-										this.AIturn(drawFunc, gameOverFunc, appState, Role);
-									}, delayDuration);
-								}
-							}
-						}
-					);
-					// アニメーション開始直後に描画を開始
-					if (drawFunc) {
-						drawFunc();
-					}
-				} else {
-					this.pos[arrayTurn(this.turn)][this.select][0] = nextmove[0];
-					this.pos[arrayTurn(this.turn)][this.select][1] = nextmove[1];
-					[this.select, this.turn, this.tagged] = stepPhase(
-						this.select,
-						this.pos,
-						this.turn,
-						this.ball,
-						this.tagged
-					);
-					// トライした場合の処理
-					if (tryJudge(this.pos, this.ball)) {
-						gameOverFunc(1, nextmove[0], nextmove[1]);
-						return;
+				} else if (this.Role[arrayTurn(this.turn)] != "human") {
+					if (appState) {
+						syncAIthinkFlag(appState, 1);
+						const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
+							? window.DELAYDURATION 
+							: GameConfig.TimingConfig.DELAYDURATION;
+						setTimeout(() => {
+							this.AIturn(drawFunc, gameOverFunc, appState, Role);
+						}, delayDuration);
 					}
 				}
+				return;
 			}
 		}
 		// アニメーションが開始されていない場合のみ、ここで次のターン処理と描画を行う
@@ -1117,7 +764,7 @@ export class GameController {
 		if (!hasAnimation) {
 			if (this.Role[arrayTurn(this.turn)] != "human") {
 				if (appState) {
-					appState.AIthinkFlag = 1;
+					syncAIthinkFlag(appState, 1);
 					const delayDuration = (typeof window !== 'undefined' && typeof window.DELAYDURATION !== 'undefined') 
 						? window.DELAYDURATION 
 						: GameConfig.TimingConfig.DELAYDURATION;
@@ -1125,17 +772,19 @@ export class GameController {
 						this.AIturn(drawFunc, gameOverFunc, appState, Role);
 					}, delayDuration);
 				}
-			}
-			if (appState) {
-				appState.AIthinkFlag = 0;
+			} else {
+				if (appState) {
+					syncAIthinkFlag(appState, 0);
+				}
 			}
 			if (drawFunc) {
 				drawFunc();
 			}
 		} else {
-			// アニメーション中は描画を開始
-			if (appState) {
-				appState.AIthinkFlag = 0;
+			if (this.Role[arrayTurn(this.turn)] == "human") {
+				if (appState) {
+					syncAIthinkFlag(appState, 0);
+				}
 			}
 			if (drawFunc) {
 				drawFunc();

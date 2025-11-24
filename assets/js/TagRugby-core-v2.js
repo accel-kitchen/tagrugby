@@ -638,35 +638,35 @@ function init() {
 				return;
 			}
 			
-			console.log('[konva.onclick] Click event fired', {
-				positionEditMode: appState ? appState.positionEditMode : 'N/A',
-				AIthinkFlag: AIthinkFlag
-			});
+			// AIthinkFlagの同期チェック（グローバル変数、window.AIthinkFlag、appStateの全てを確認）
+			// window.AIthinkFlagが更新されている場合は、グローバル変数も同期
+			if (typeof window !== 'undefined' && typeof window.AIthinkFlag !== 'undefined') {
+				AIthinkFlag = window.AIthinkFlag;
+			}
+			const isAIThinking = AIthinkFlag != 0 || (appState && appState.AIthinkFlag != 0);
 			
 			if (e.evt) {
 				e.evt.preventDefault();
 			}
 			const blockPos = renderer.getBlockPositionFromEvent(e);
-			console.log('[konva.onclick] blockPos:', blockPos);
 			
-			if (AIthinkFlag == 0 && blockPos.x >= 0 && blockPos.y >= 0) {
+			if (!isAIThinking && blockPos.x >= 0 && blockPos.y >= 0) {
 				mouseBlockX = blockPos.x;
 				mouseBlockY = blockPos.y;
 				// 評価値をクリア
 				if (renderer instanceof KonvaBoardRenderer) {
 					renderer.clearAnalysisValues();
 				}
-				console.log('[konva.onclick] Calling humanTurn with:', { x: mouseBlockX, y: mouseBlockY });
-				game.humanTurn(mouseBlockX, mouseBlockY, () => {
-					if (renderer) {
-						renderer.draw(() => refreshParam(game));
-					}
-				}, gameOver, appState);
-			} else {
-				console.warn('[konva.onclick] AI is thinking or invalid position, ignoring click', {
-					AIthinkFlag: AIthinkFlag,
-					blockPos: blockPos
-				});
+				try {
+					game.humanTurn(mouseBlockX, mouseBlockY, () => {
+						if (renderer) {
+							renderer.draw(() => refreshParam(game));
+						}
+					}, gameOver, appState);
+				} catch (error) {
+					console.error('[konva.onclick] Error calling humanTurn:', error);
+					console.error('[konva.onclick] Error stack:', error.stack);
+				}
 			}
 		});
 		
@@ -705,7 +705,12 @@ function init() {
 						if (blockPos.x >= 0 && blockPos.y >= 0 &&
 							Math.abs(blockPos.x - touchStartPos.x) <= 1 &&
 							Math.abs(blockPos.y - touchStartPos.y) <= 1) {
-							if (AIthinkFlag == 0) {
+							// AIthinkFlagの同期チェック（グローバル変数、window.AIthinkFlag、appStateの全てを確認）
+							if (typeof window !== 'undefined' && typeof window.AIthinkFlag !== 'undefined') {
+								AIthinkFlag = window.AIthinkFlag;
+							}
+							const isAIThinking = AIthinkFlag != 0 || (appState && appState.AIthinkFlag != 0);
+							if (!isAIThinking) {
 								mouseBlockX = blockPos.x;
 								mouseBlockY = blockPos.y;
 								// 評価値をクリア
@@ -829,8 +834,17 @@ function rematchInit() {
  */
 function rematch() {
 	rematchInit();
-	if (Role[arrayTurn(game.turn)] != "human") {
+	// ロール変更時にAIthinkFlagをリセット（人間に切り替えた場合）
+	if (Role[arrayTurn(game.turn)] == "human") {
+		AIthinkFlag = 0;
+		if (appState) {
+			appState.AIthinkFlag = 0;
+		}
+	} else if (Role[arrayTurn(game.turn)] != "human") {
 		AIthinkFlag = 1;
+		if (appState) {
+			appState.AIthinkFlag = 1;
+		}
 		game.AIturn(
 			() => {
 				if (renderer) {
@@ -869,6 +883,14 @@ function config() {
 	
 	rematchInit();
 	
+	// ロール変更時にAIthinkFlagをリセット（人間に切り替えた場合）
+	if (game && Role[arrayTurn(game.turn)] == "human") {
+		AIthinkFlag = 0;
+		if (appState) {
+			appState.AIthinkFlag = 0;
+		}
+	}
+	
 	// キャンバスサイズを再計算して反映（rematchInitの後に呼ぶ）
 	if (typeof canvas_resize === 'function') {
 		canvas_resize();
@@ -900,6 +922,14 @@ function restart() {
 	Role[0] = document.ControlForm.defense_role.value;
 	game.Role[0] = Role[0];
 	game.Role[1] = Role[1];
+	
+	// ロール変更時にAIthinkFlagをリセット（人間に切り替えた場合）
+	if (Role[arrayTurn(game.turn)] == "human") {
+		AIthinkFlag = 0;
+		if (appState) {
+			appState.AIthinkFlag = 0;
+		}
+	}
 
 	const game_speed = document.ControlForm.game_speed.value;
 	if (game_speed == 0) {

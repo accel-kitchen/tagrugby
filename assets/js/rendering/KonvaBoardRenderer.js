@@ -30,17 +30,14 @@ export class KonvaBoardRenderer {
 		this.CANVASSIZE = GameConfig.BoardConfig.CANVASSIZE;
 		this.animationManager = animationManager || new AnimationManager();
 		
+		// アニメーションを無効化（即座に処理を実行）
+		this.animationManager.setSpeed(0);
+		
 		// デバイス検出と性能設定
 		this.isMobile = this.detectMobileDevice();
 		this.targetFPS = this.isMobile ? 30 : 60; // モバイルは30fps、デスクトップは60fps
 		this.lastDrawTime = 0;
 		this.frameInterval = 1000 / this.targetFPS;
-		
-		// モバイルでのアニメーション速度調整（少し速くして重さを軽減）
-		if (this.isMobile) {
-			// モバイルではアニメーション速度を1.5倍に（duration短縮）
-			this.animationManager.setSpeed(0.67); // 1/1.5 ≈ 0.67
-		}
 		
 		// 静的要素のキャッシュ状態
 		this.staticCacheValid = false;
@@ -862,6 +859,7 @@ export class KonvaBoardRenderer {
 	getBlockPositionFromEvent(event) {
 		const pointerPos = this.stage.getPointerPosition();
 		if (!pointerPos) {
+			console.log('[getBlockPositionFromEvent] No pointer position');
 			return { x: -1, y: -1 };
 		}
 		
@@ -871,9 +869,19 @@ export class KonvaBoardRenderer {
 		const mouseBlockX = Math.floor((mouseX - this.NUMSIZE - 0.5) / this.BLOCKSIZE);
 		const mouseBlockY = Math.floor((mouseY - this.NUMSIZE - 0.5) / this.BLOCKSIZE);
 		
+		console.log('[getBlockPositionFromEvent] Coordinate conversion:', {
+			pointerPos: { x: mouseX, y: mouseY },
+			NUMSIZE: this.NUMSIZE,
+			BLOCKSIZE: this.BLOCKSIZE,
+			BOARDSIZE: this.BOARDSIZE,
+			calculated: { x: mouseBlockX, y: mouseBlockY },
+			stageSize: { width: this.stage.width(), height: this.stage.height() }
+		});
+		
 		// 境界チェック
 		if (mouseBlockX < 0 || mouseBlockX >= this.BOARDSIZE ||
 			mouseBlockY < 0 || mouseBlockY >= this.BOARDSIZE) {
+			console.log('[getBlockPositionFromEvent] Out of bounds');
 			return { x: -1, y: -1 };
 		}
 		
