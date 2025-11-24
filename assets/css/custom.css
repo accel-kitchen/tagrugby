@@ -109,6 +109,55 @@ a:hover {
   gap: 1rem;
 }
 
+/* レイアウト選択機能 */
+.layout-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--glass-surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(24, 61, 126, 0.15);
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+}
+
+.layout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.9rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.layout-btn:hover {
+  background: rgba(44, 123, 229, 0.08);
+  color: var(--text-primary);
+}
+
+.layout-btn.active {
+  background: rgba(44, 123, 229, 0.15);
+  color: var(--accent-secondary);
+  font-weight: 600;
+}
+
+.layout-btn .material-symbols-outlined {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.layout-btn__label {
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
 .nav-pill {
   padding: 0.4rem 0.9rem;
   border-radius: 999px;
@@ -236,6 +285,45 @@ a:hover {
 .app-main .row {
   position: relative;
   z-index: 1;
+}
+
+/* レイアウトモード */
+.app-main.layout-auto .row {
+  /* 自動レイアウト: 画面サイズに応じて自動選択 */
+  /* デフォルトのBootstrapの動作を使用 */
+}
+
+/* 縦積みレイアウト: すべてのセクションを縦に並べる（1列構成） */
+.app-main.layout-vertical .row.gy-4 {
+  flex-direction: column !important;
+}
+
+.app-main.layout-vertical .row.gy-4 > div[class*="col-xxl-8"],
+.app-main.layout-vertical .row.gy-4 > div[class*="col-xxl-4"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: 0 0 100% !important;
+}
+
+/* フルサイズレイアウト: サイドバーを表示（2列構成 70%/30%） */
+.app-main.layout-fullsize .row.gy-4 {
+  display: flex !important;
+  flex-wrap: wrap !important;
+}
+
+/* より具体的なセレクタでBootstrapを上書き */
+.app-main.layout-fullsize .row.gy-4 > div.col-xxl-8.d-flex.flex-column.gap-4,
+.app-main.layout-fullsize .row.gy-4 > div.col-xxl-8 {
+  flex: 0 0 70% !important;
+  max-width: 70% !important;
+  width: 70% !important;
+}
+
+.app-main.layout-fullsize .row.gy-4 > div.col-xxl-4.d-flex.flex-column.gap-4,
+.app-main.layout-fullsize .row.gy-4 > div.col-xxl-4 {
+  flex: 0 0 30% !important;
+  max-width: 30% !important;
+  width: 30% !important;
 }
 
 .glass-panel {
@@ -800,7 +888,26 @@ a:hover {
 
 @media (max-width: 768px) {
   .app-nav__actions {
-    display: none;
+    display: flex;
+  }
+  
+  .layout-buttons {
+    gap: 0.25rem;
+    padding: 0.2rem;
+  }
+  
+  .layout-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    gap: 0.3rem;
+  }
+  
+  .layout-btn .material-symbols-outlined {
+    font-size: 1rem;
+  }
+  
+  .layout-btn__label {
+    font-size: 0.8rem;
   }
 
   .app-main {
