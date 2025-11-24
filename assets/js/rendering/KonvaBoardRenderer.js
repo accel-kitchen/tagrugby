@@ -577,16 +577,31 @@ export class KonvaBoardRenderer {
 	 * ボールを描画
 	 */
 	drawBall() {
-		// 編集モードではボールを描画しない（プレイヤーをドラッグできるようにするため）
-		if (this.appState && this.appState.positionEditMode) {
-			return;
-		}
-
 		// パスアニメーション中かチェック
 		const passPos = this.animationManager.getPassPosition();
 		let ballX, ballY, ballZ = 0;
 		
-		if (passPos) {
+		// 編集モード中はアニメーションを無視して通常位置に表示
+		if (this.appState && this.appState.positionEditMode) {
+			// 編集モード中：ボールを持っているプレイヤーの位置に表示
+			// editingPositionsを使用（drawPlayers()と同様）
+			if (this.positionEditor && this.positionEditor.editingPositions &&
+				this.gameState && this.gameState.ball !== undefined &&
+				this.positionEditor.editingPositions.attack &&
+				this.positionEditor.editingPositions.attack[this.gameState.ball]) {
+				ballX = this.positionEditor.editingPositions.attack[this.gameState.ball][0];
+				ballY = this.positionEditor.editingPositions.attack[this.gameState.ball][1];
+			} else if (this.gameState && this.gameState.ball !== undefined && 
+				this.gameState.pos && this.gameState.pos[1] && 
+				this.gameState.pos[1][this.gameState.ball]) {
+				// フォールバック：gameState.posを使用
+				ballX = this.gameState.pos[1][this.gameState.ball][0];
+				ballY = this.gameState.pos[1][this.gameState.ball][1];
+			} else {
+				// ボール情報が無い場合は描画しない
+				return;
+			}
+		} else if (passPos) {
 			// パスアニメーション中
 			ballX = passPos.x;
 			ballY = passPos.y;
