@@ -468,8 +468,6 @@ if (typeof window !== 'undefined') {
  * キャンバスサイズを調整
  */
 function canvas_resize() {
-	console.log('[canvas_resize] called, window.BOARDSIZE:', window.BOARDSIZE);
-	
 	// KonvaRendererの場合はコンテナサイズから計算
 	if (renderer && renderer instanceof KonvaBoardRenderer) {
 		const boards = document.getElementsByClassName('boardarea');
@@ -487,19 +485,10 @@ function canvas_resize() {
 		const BLOCKSIZE = CANVASSIZE / boardsize;
 		const ANALYSISSIZE = 0.5 * BLOCKSIZE;
 		
-		console.log('[canvas_resize] Konva result:', {
-			'BLOCKSIZE': BLOCKSIZE,
-			'CANVASSIZE': CANVASSIZE,
-			'ANALYSISSIZE': ANALYSISSIZE,
-			'window.BOARDSIZE': window.BOARDSIZE
-		});
-		
 		renderer.updateSize(BLOCKSIZE, boardsize, window.NUMSIZE, CANVASSIZE);
 		window.BLOCKSIZE = BLOCKSIZE;
 		window.CANVASSIZE = CANVASSIZE;
 		window.ANALYSISSIZE = ANALYSISSIZE;
-		
-		console.log('[canvas_resize] after update, window.BLOCKSIZE:', window.BLOCKSIZE, 'window.BOARDSIZE:', window.BOARDSIZE);
 		
 		// サイズ更新後に描画
 		if (renderer && game) {
@@ -509,17 +498,10 @@ function canvas_resize() {
 		// 従来のCanvasRendererの場合
 		const result = resizeCanvas(canvas, ctx, null);
 		if (result && renderer) {
-			console.log('[canvas_resize] result:', {
-				'BLOCKSIZE': result.BLOCKSIZE,
-				'CANVASSIZE': result.CANVASSIZE,
-				'ANALYSISSIZE': result.ANALYSISSIZE,
-				'window.BOARDSIZE': window.BOARDSIZE
-			});
 			renderer.updateSize(result.BLOCKSIZE, window.BOARDSIZE, window.NUMSIZE, result.CANVASSIZE);
 			window.BLOCKSIZE = result.BLOCKSIZE;
 			window.CANVASSIZE = result.CANVASSIZE;
 			window.ANALYSISSIZE = result.ANALYSISSIZE;
-			console.log('[canvas_resize] after update, window.BLOCKSIZE:', window.BLOCKSIZE, 'window.BOARDSIZE:', window.BOARDSIZE);
 			if (renderer && game) {
 				renderer.draw(() => refreshParam(game));
 			}
