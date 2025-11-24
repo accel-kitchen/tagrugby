@@ -151,6 +151,19 @@ export class GameController {
 		}
 		// タグが取られた場合の処理
 		else if (tagJudge(this.select, this.pos, this.turn, this.ball, x, y)) {
+			// rendererを取得してイベント表示
+			let rendererToUse = appState?.renderer;
+			if (!rendererToUse && typeof window !== 'undefined' && window.renderer) {
+				rendererToUse = window.renderer;
+			}
+			if (rendererToUse && typeof rendererToUse.showPlayerEvent === 'function') {
+				if (this.tag == 1) {
+					rendererToUse.showPlayerEvent(x, y, 'タグ全滅！', '#FF0000', 3000);
+				} else {
+					rendererToUse.showPlayerEvent(x, y, 'タグ！', '#FF6600', 2000);
+				}
+			}
+			
 			if (this.tag == 1) {
 				gameOverFunc(-1, x, y);
 				return;
@@ -235,6 +248,14 @@ export class GameController {
 					this.wait,
 					animationManager
 				);
+				// パス成功/失敗のイベント表示
+				if (rendererToUse && typeof rendererToUse.showPlayerEvent === 'function') {
+					if (this.wait == -1) {
+						rendererToUse.showPlayerEvent(toX, toY, 'パス成功！', '#00FF00', 2000);
+					} else {
+						rendererToUse.showPlayerEvent(toX, toY, 'パス失敗！', '#FF0000', 2000);
+					}
+				}
 				this.ball = catchableResult;
 				[this.select, this.turn, this.tagged] = stepPhase(
 					this.select,
@@ -294,6 +315,14 @@ export class GameController {
 						}
 						// トライした場合の処理
 						if (tryJudge(this.pos, this.ball)) {
+							// rendererを取得してイベント表示
+							let rendererToUse = appState?.renderer;
+							if (!rendererToUse && typeof window !== 'undefined' && window.renderer) {
+								rendererToUse = window.renderer;
+							}
+							if (rendererToUse && typeof rendererToUse.showPlayerEvent === 'function') {
+								rendererToUse.showPlayerEvent(x, y, 'トライ！', '#00FF00', 3000);
+							}
 							gameOverFunc(1, x, y);
 							return;
 						}
@@ -518,6 +547,22 @@ export class GameController {
 			nextmove[1]
 		);
 		if (tagResult) {
+			// rendererを取得してイベント表示
+			if (!rendererToUse) {
+				if (appState?.renderer) {
+					rendererToUse = appState.renderer;
+				} else if (typeof window !== 'undefined' && window.renderer) {
+					rendererToUse = window.renderer;
+				}
+			}
+			if (rendererToUse && typeof rendererToUse.showPlayerEvent === 'function') {
+				if (this.tag == 1) {
+					rendererToUse.showPlayerEvent(nextmove[0], nextmove[1], 'タグ全滅！', '#FF0000', 3000);
+				} else {
+					rendererToUse.showPlayerEvent(nextmove[0], nextmove[1], 'タグ！', '#FF6600', 2000);
+				}
+			}
+			
 			if (this.tag == 1) {
 				gameOverFunc(-1, nextmove[0], nextmove[1]);
 				return;
@@ -673,6 +718,14 @@ export class GameController {
 					this.wait,
 					animationManager
 				);
+				// パス成功/失敗のイベント表示
+				if (rendererToUse && typeof rendererToUse.showPlayerEvent === 'function') {
+					if (this.wait == -1) {
+						rendererToUse.showPlayerEvent(toX, toY, 'パス成功！', '#00FF00', 2000);
+					} else {
+						rendererToUse.showPlayerEvent(toX, toY, 'パス失敗！', '#FF0000', 2000);
+					}
+				}
 				this.ball = catchableResult;
 				const [newSelect, newTurn, newTagged] = stepPhase(
 					this.select,
@@ -729,6 +782,17 @@ export class GameController {
 				}
 				// トライした場合の処理
 				if (tryJudge(this.pos, this.ball)) {
+					// rendererを取得してイベント表示
+					if (!rendererToUse) {
+						if (appState?.renderer) {
+							rendererToUse = appState.renderer;
+						} else if (typeof window !== 'undefined' && window.renderer) {
+							rendererToUse = window.renderer;
+						}
+					}
+					if (rendererToUse && typeof rendererToUse.showPlayerEvent === 'function') {
+						rendererToUse.showPlayerEvent(toX, toY, 'トライ！', '#00FF00', 3000);
+					}
 					gameOverFunc(1, toX, toY);
 					return;
 				}

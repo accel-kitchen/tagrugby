@@ -64,6 +64,8 @@ export class KonvaBoardRenderer {
 		this.tagEffect = null;
 		this.feedbackTexts = [];
 		this.coordinateLabels = [];
+		this.playerEventTexts = []; // プレイヤーイベント表示用
+		this.activePlayerEvents = []; // アクティブなプレイヤーイベント
 		
 		// 解析評価値データ
 		this.evalList = null;
@@ -230,6 +232,7 @@ export class KonvaBoardRenderer {
 			this.tagEffect = null;
 			this.feedbackTexts = [];
 			this.coordinateLabels = [];
+			this.playerEventTexts = [];
 
 			// 背景の描画
 			this.drawBackground();
@@ -268,6 +271,9 @@ export class KonvaBoardRenderer {
 			// フィードバックエフェクトの描画
 			this.drawFeedbackEffects();
 			
+			// プレイヤーイベントの描画
+			this.drawPlayerEvents();
+			
 			// 解析評価値の描画
 			this.drawAnalysisValues();
 			
@@ -283,6 +289,7 @@ export class KonvaBoardRenderer {
 				this.drawBall();
 				this.drawTagEffect();
 				this.drawFeedbackEffects();
+				this.drawPlayerEvents();
 				this.drawAnalysisValues();
 			} else {
 				// 通常のアニメーション中は動的要素のみ更新
@@ -294,6 +301,7 @@ export class KonvaBoardRenderer {
 				this.drawBall();
 				this.drawTagEffect();
 				this.drawFeedbackEffects();
+				this.drawPlayerEvents();
 				this.drawAnalysisValues();
 			}
 		}
@@ -301,8 +309,8 @@ export class KonvaBoardRenderer {
 		// バッチ描画で最適化
 		this.stage.batchDraw();
 		
-		// アニメーション中は次のフレームで再描画をスケジュール
-		if (hasAnimations) {
+		// アニメーション中またはアクティブなプレイヤーイベントがある場合は次のフレームで再描画をスケジュール
+		if (hasAnimations || (this.activePlayerEvents && this.activePlayerEvents.length > 0)) {
 			requestAnimationFrame(() => {
 				this.draw(refreshParamFunc);
 			});
@@ -770,6 +778,110 @@ export class KonvaBoardRenderer {
 			this.uiLayer.add(shadow);
 			this.uiLayer.add(text);
 			this.feedbackTexts.push(text);
+		}
+	}
+
+	/**
+	 * プレイヤーイベントを描画
+	 */
+	drawPlayerEvents() {
+		// 既存のテキストをクリア
+		for (const textGroup of this.playerEventTexts) {
+			if (textGroup.text) textGroup.text.destroy();
+			if (textGroup.shadow) textGroup.shadow.destroy();
+		}
+		this.playerEventTexts = [];
+		
+		// アクティブなイベントを描画
+		if (!this.activePlayerEvents) {
+			this.activePlayerEvents = [];
+		}
+		
+		const now = Date.now();
+		for (let i = this.activePlayerEvents.length - 1; i >= 0; i--) {
+			const event = this.activePlayerEvents[i];
+			if (now > event.endTime) {
+				// 時間切れのイベントを削除
+				this.activePlayerEvents.splice(i, 1);
+				continue;
+			}
+			
+			const screenX = event.x * this.BLOCKSIZE + this.BLOCKSIZE * 0.5 + this.NUMSIZE;
+			const screenY = (event.y - 1) * this.BLOCKSIZE + this.BLOCKSIZE * 0.5 + this.NUMSIZE;
+			
+			// フェードアウト効果
+			const elapsed = now - event.startTime;
+			const duration = event.endTime - event.startTime;
+			const opacity = Math.max(0, 1 - (elapsed / duration));
+			
+			// テキストサイズ（大きく目立つように）
+			const fontSize = Math.max(24, this.BLOCKSIZE * 0.6);
+			
+			// 影を先に描画
+			const shadow = new Konva.Text({
+				x: screenX + 2,
+				y: screenY + 2,
+				text: event.text,
+				fontSize: fontSize,
+				fontFamily: 'sans-serif',
+				fontStyle: 'bold',
+				fill: '#000000',
+				align: 'center',
+				verticalAlign: 'middle',
+				opacity: opacity * 0.7,
+			});
+			shadow.offsetX(shadow.width() / 2);
+			shadow.offsetY(shadow.height() / 2);
+			
+			// メインテキスト
+			const text = new Konva.Text({
+				x: screenX,
+				y: screenY,
+				text: event.text,
+				fontSize: fontSize,
+				fontFamily: 'sans-serif',
+				fontStyle: 'bold',
+				fill: event.color,
+				align: 'center',
+				verticalAlign: 'middle',
+				opacity: opacity,
+			});
+			text.offsetX(text.width() / 2);
+			text.offsetY(text.height() / 2);
+			
+			this.uiLayer.add(shadow);
+			this.uiLayer.add(text);
+			this.playerEventTexts.push({ text, shadow });
+		}
+	}
+
+	/**
+	 * プレイヤーの上にイベントテキストを表示
+	 * @param {number} x - プレイヤーのx座標（ブロック座標）
+	 * @param {number} y - プレイヤーのy座標（ブロック座標）
+	 * @param {string} text - 表示するテキスト
+	 * @param {string} color - テキストの色
+	 * @param {number} duration - 表示時間（ミリ秒、デフォルト2000ms）
+	 */
+	showPlayerEvent(x, y, text, color = '#FF0000', duration = 2000) {
+		if (!this.activePlayerEvents) {
+			this.activePlayerEvents = [];
+		}
+		
+		const now = Date.now();
+		this.activePlayerEvents.push({
+			x: x,
+			y: y,
+			text: text,
+			color: color,
+			startTime: now,
+			endTime: now + duration
+		});
+		
+		// 即座に再描画
+		this.markForFullRedraw();
+		if (this.stage) {
+			this.draw(() => {});
 		}
 	}
 
