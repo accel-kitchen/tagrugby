@@ -112,6 +112,25 @@
             </div>
           </section>
 
+          <section class="glass-panel chat-panel" aria-labelledby="chatPanelTitle">
+            <header class="panel-header">
+              <span class="eyebrow">AI Conversation</span>
+              <h2 id="chatPanelTitle">AIに相談する</h2>
+            </header>
+            <div id="chat-box"></div>
+            <div id="loadingIndicator" class="chat-loading" style="display: none;">読み込み中...</div>
+            <textarea
+              id="input-field"
+              class="form-control"
+              rows="5"
+              placeholder="戦術の疑問や分析のリクエストを入力"
+            ></textarea>
+            <button type="button" class="btn btn-primary w-100" onclick="sendChat()">
+              <span class="material-symbols-outlined">mic</span>
+              話しかける
+            </button>
+          </section>
+
           <section class="glass-panel code-editor" aria-labelledby="attackEditorTitle">
             <header class="panel-header">
               <span class="eyebrow">AI Code</span>
@@ -144,25 +163,6 @@
                 </div>
               </div>
             </form>
-          </section>
-
-          <section class="glass-panel chat-panel" aria-labelledby="chatPanelTitle">
-            <header class="panel-header">
-              <span class="eyebrow">AI Conversation</span>
-              <h2 id="chatPanelTitle">AIに相談する</h2>
-            </header>
-            <div id="chat-box"></div>
-            <div id="loadingIndicator" class="chat-loading" style="display: none;">読み込み中...</div>
-            <textarea
-              id="input-field"
-              class="form-control"
-              rows="5"
-              placeholder="戦術の疑問や分析のリクエストを入力"
-            ></textarea>
-            <button type="button" class="btn btn-primary w-100" onclick="sendChat()">
-              <span class="material-symbols-outlined">mic</span>
-              話しかける
-            </button>
           </section>
 
           <section class="glass-panel sample-panel" aria-labelledby="sampleTitle">
